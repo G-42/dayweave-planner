@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Play, Pause, RotateCcw, TrendingUp, Calendar, Target, Flame, CheckCircle, Plus } from 'lucide-react';
+import { Play, Pause, RotateCcw, TrendingUp, Calendar, Target, Flame, CheckCircle, Plus, Settings, Save, X } from 'lucide-react';
 
 interface HabitData {
   name: string;
@@ -28,9 +28,20 @@ interface ManualInput {
   [habitName: string]: string;
 }
 
+interface UnitInput {
+  [habitName: string]: string;
+}
+
+interface GoalInput {
+  [habitName: string]: string;
+}
+
 export default function Habits() {
   const [habits, setHabits] = useState<HabitData[]>([]);
   const [manualInputs, setManualInputs] = useState<ManualInput>({});
+  const [unitInputs, setUnitInputs] = useState<UnitInput>({});
+  const [goalInputs, setGoalInputs] = useState<GoalInput>({});
+  const [editingHabit, setEditingHabit] = useState<string | null>(null);
   const [timer, setTimer] = useState<TimerState>({
     isRunning: false,
     seconds: 0,
@@ -179,6 +190,34 @@ export default function Habits() {
       updateHabitValue(habitName, value);
       setManualInputs(prev => ({ ...prev, [habitName]: '' }));
     }
+  };
+
+  const updateHabitSettings = (habitName: string) => {
+    const newUnit = unitInputs[habitName];
+    const newGoal = parseFloat(goalInputs[habitName] || '0');
+    
+    if (newUnit && newGoal > 0) {
+      setHabits(prev => prev.map(habit =>
+        habit.name === habitName
+          ? { ...habit, unit: newUnit, dailyGoal: newGoal }
+          : habit
+      ));
+      setEditingHabit(null);
+      setUnitInputs(prev => ({ ...prev, [habitName]: '' }));
+      setGoalInputs(prev => ({ ...prev, [habitName]: '' }));
+    }
+  };
+
+  const startEditingHabit = (habitName: string, currentUnit: string, currentGoal: number) => {
+    setEditingHabit(habitName);
+    setUnitInputs(prev => ({ ...prev, [habitName]: currentUnit }));
+    setGoalInputs(prev => ({ ...prev, [habitName]: currentGoal.toString() }));
+  };
+
+  const cancelEditingHabit = (habitName: string) => {
+    setEditingHabit(null);
+    setUnitInputs(prev => ({ ...prev, [habitName]: '' }));
+    setGoalInputs(prev => ({ ...prev, [habitName]: '' }));
   };
 
   const getProgressPercentage = (habit: HabitData) => {
@@ -379,6 +418,83 @@ export default function Habits() {
                       <div className="text-xs text-muted-foreground">日</div>
                     </div>
                   </div>
+
+                  {/* Settings Section */}
+                  {editingHabit === habit.name ? (
+                    <div className="space-y-3 p-3 bg-accent/50 rounded-lg border border-border">
+                      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <Settings className="w-4 h-4" />
+                        習慣設定を編集
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <label className="text-xs text-muted-foreground">単位</label>
+                          <Input
+                            value={unitInputs[habit.name] || ''}
+                            onChange={(e) => setUnitInputs(prev => ({ 
+                              ...prev, 
+                              [habit.name]: e.target.value 
+                            }))}
+                            placeholder="例: 分、ページ、回"
+                            className="text-sm"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-xs text-muted-foreground">目標値</label>
+                          <Input
+                            type="number"
+                            value={goalInputs[habit.name] || ''}
+                            onChange={(e) => setGoalInputs(prev => ({ 
+                              ...prev, 
+                              [habit.name]: e.target.value 
+                            }))}
+                            placeholder="目標値"
+                            min="0"
+                            step="0.1"
+                            className="text-sm"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => updateHabitSettings(habit.name)}
+                          size="sm"
+                          className="bg-gradient-to-r from-success to-success-soft flex-1"
+                          disabled={!unitInputs[habit.name] || !goalInputs[habit.name] || parseFloat(goalInputs[habit.name] || '0') <= 0}
+                        >
+                          <Save className="w-4 h-4 mr-1" />
+                          保存
+                        </Button>
+                        <Button
+                          onClick={() => cancelEditingHabit(habit.name)}
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          キャンセル
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
+                      <div className="text-sm text-muted-foreground">
+                        設定: {habit.dailyGoal} {habit.unit} / 日
+                      </div>
+                      <Button
+                        onClick={() => startEditingHabit(habit.name, habit.unit, habit.dailyGoal)}
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        <Settings className="w-3 h-3 mr-1" />
+                        編集
+                      </Button>
+                    </div>
+                  )}
 
                   {/* Manual Input */}
                   <div className="flex gap-2">
