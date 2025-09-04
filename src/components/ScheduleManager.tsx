@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { ScheduleItemEditor } from './ScheduleItemEditor';
 import { WeeklyView } from './WeeklyView';
+import { TemplateEditor } from './TemplateEditor';
 import { Plus, Clock, CheckCircle, Circle, Target, Calendar, Edit, Trash2, MoreHorizontal, Save, ChevronDown, Bookmark } from 'lucide-react';
 import {
   DropdownMenu,
@@ -66,6 +67,7 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
   const [templateName, setTemplateName] = useState('');
   const [isTemplateMenuOpen, setIsTemplateMenuOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
 
   // Load data from localStorage
   useEffect(() => {
@@ -220,6 +222,11 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
 
   const handleEditTemplate = (template: Template) => {
     setEditingTemplate(template);
+    setIsTemplateEditorOpen(true);
+  };
+
+  const handleEditTemplateName = (template: Template) => {
+    setEditingTemplate(template);
     setTemplateName(template.name);
     setIsTemplateDialogOpen(true);
   };
@@ -236,6 +243,20 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
     setEditingTemplate(null);
     setTemplateName('');
     setIsTemplateDialogOpen(false);
+  };
+
+  const handleSaveTemplateFromEditor = (updatedTemplate: Template) => {
+    if (updatedTemplate.id && templates.find(t => t.id === updatedTemplate.id)) {
+      // Update existing template
+      setTemplates(prev => prev.map(t => 
+        t.id === updatedTemplate.id ? updatedTemplate : t
+      ));
+    } else {
+      // Add new template
+      setTemplates(prev => [...prev, { ...updatedTemplate, id: Date.now().toString() }]);
+    }
+    setEditingTemplate(null);
+    setIsTemplateEditorOpen(false);
   };
 
   const getPriorityColor = (priority?: string) => {
@@ -369,7 +390,11 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                                     <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border z-50">
                                       <DropdownMenuItem onClick={() => handleEditTemplate(template)}>
                                         <Edit className="w-3 h-3 mr-2" />
-                                        編集
+                                        詳細編集
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleEditTemplateName(template)}>
+                                        <Edit className="w-3 h-3 mr-2" />
+                                        名前変更
                                       </DropdownMenuItem>
                                       {!isWelcomeTemplate && (
                                         <DropdownMenuItem 
@@ -610,6 +635,18 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Template Editor */}
+      <TemplateEditor
+        template={editingTemplate}
+        isOpen={isTemplateEditorOpen}
+        onClose={() => {
+          setIsTemplateEditorOpen(false);
+          setEditingTemplate(null);
+        }}
+        onSave={handleSaveTemplateFromEditor}
+        habits={habits}
+      />
     </div>
   );
 };
