@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import { ScheduleManager } from '@/components/ScheduleManager';
 import { Calendar, Clock, Plus, CheckCircle, Circle, Zap, Sun, Moon, Briefcase, Target, TrendingUp } from 'lucide-react';
 
 interface UserData {
@@ -49,15 +50,11 @@ interface TodoItem {
 
 export default function Dashboard() {
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [todaySchedule, setTodaySchedule] = useState<ScheduleItem[]>([]);
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [habitProgress, setHabitProgress] = useState<HabitProgress[]>([]);
   const [todosToday, setTodosToday] = useState<TodoItem[]>([]);
 
   useEffect(() => {
     const data = localStorage.getItem('dayweave-user');
-    const templatesData = localStorage.getItem('dayweave-templates');
     const habitsData = localStorage.getItem('dayweave-habits');
     const todosData = localStorage.getItem('dayweave-todos');
     
@@ -65,15 +62,10 @@ export default function Dashboard() {
       const user = JSON.parse(data);
       setUserData(user);
     }
-    
-    if (templatesData) {
-      setTemplates(JSON.parse(templatesData));
-    }
 
     // Load habits data with actual progress
     if (habitsData) {
       const habits = JSON.parse(habitsData);
-      const today = new Date().toISOString().split('T')[0];
       
       const progressData = habits.map((habit: any) => {
         const progressPercentage = Math.min((habit.todayValue / habit.dailyGoal) * 100, 100);
@@ -104,7 +96,6 @@ export default function Dashboard() {
     // Load today's important todos
     if (todosData) {
       const todos = JSON.parse(todosData);
-      const today = new Date().toISOString().split('T')[0];
       
       // Filter for today's important tasks (high priority, due today, or overdue)
       const importantTodos = todos.filter((todo: any) => {
@@ -112,7 +103,7 @@ export default function Dashboard() {
         if (todo.priority === 'high') return true;
         if (todo.dueDate) {
           const dueDate = new Date(todo.dueDate);
-          const todayDate = new Date(today);
+          const todayDate = new Date();
           return dueDate <= todayDate;
         }
         return false;
@@ -121,71 +112,6 @@ export default function Dashboard() {
       setTodosToday(importantTodos);
     }
   }, []);
-
-  const applyTemplate = (templateId: string) => {
-    const template = templates.find(t => t.id === templateId);
-    if (template) {
-      // Add completed status to items
-      const scheduleWithStatus = template.items.map(item => ({
-        ...item,
-        completed: false,
-      }));
-      setTodaySchedule(scheduleWithStatus);
-      
-      // Update habit progress with scheduled times
-      const updatedProgress = habitProgress.map(progress => {
-        const habitItem = template.items.find(item => 
-          item.isHabit && item.habitName === progress.habitName
-        );
-        return {
-          ...progress,
-          scheduledTime: habitItem ? `${habitItem.startTime}〜${habitItem.endTime}` : undefined,
-        };
-      });
-      setHabitProgress(updatedProgress);
-    }
-  };
-
-  const toggleScheduleItem = (itemId: string) => {
-    setTodaySchedule(prev => prev.map(item => 
-      item.id === itemId ? { ...item, completed: !item.completed } : item
-    ));
-    
-    // Update habit progress if it's a habit
-    const item = todaySchedule.find(item => item.id === itemId);
-    if (item && item.isHabit && item.habitName) {
-      setHabitProgress(prev => prev.map(progress =>
-        progress.habitName === item.habitName 
-          ? { ...progress, completed: !item.completed }
-          : progress
-      ));
-    }
-  };
-
-  const toggleHabit = (habitName: string) => {
-    setHabitProgress(prev => prev.map(progress =>
-      progress.habitName === habitName 
-        ? { ...progress, completed: !progress.completed }
-        : progress
-    ));
-    
-    // Update schedule item if it exists
-    const habitItem = todaySchedule.find(item => 
-      item.isHabit && item.habitName === habitName
-    );
-    if (habitItem) {
-      toggleScheduleItem(habitItem.id);
-    }
-  };
-
-  const getTemplateIcon = (templateId: string) => {
-    switch (templateId) {
-      case 'holiday-a': return <Sun className="w-4 h-4" />;
-      case 'holiday-b': return <Zap className="w-4 h-4" />;
-      case 'workday': return <Briefcase className="w-4 h-4" />;
-      default: return <Calendar className="w-4 h-4" />;
-    }
-  };
 
   const completedHabits = habitProgress.filter(h => h.completed).length;
   const totalHabits = habitProgress.length;
@@ -243,111 +169,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Template Selection */}
-        {templates.length > 0 && (
-          <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="text-lg">今日のテンプレート</CardTitle>
-              <CardDescription>スケジュールテンプレートを選択してください</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                <SelectTrigger>
-                  <SelectValue placeholder="テンプレートを選択" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
-                      <div className="flex items-center gap-2">
-                        {getTemplateIcon(template.id)}
-                        {template.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              {selectedTemplate && (
-                <Button
-                  onClick={() => applyTemplate(selectedTemplate)}
-                  className="w-full bg-gradient-to-r from-primary to-primary-glow"
-                >
-                  このテンプレートを適用
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Today's Schedule */}
-        <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">今日のスケジュール</CardTitle>
-                <CardDescription>
-                  {todaySchedule.length > 0 
-                    ? `${todaySchedule.filter(item => item.completed).length}/${todaySchedule.length} 完了`
-                    : 'スケジュールを設定しましょう'
-                  }
-                </CardDescription>
-              </div>
-              <Button size="sm" variant="outline" className="text-primary border-primary hover:bg-primary-soft">
-                <Plus className="w-4 h-4 mr-1" />
-                追加
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {todaySchedule.length > 0 ? (
-              todaySchedule.map((item) => (
-                <div
-                  key={item.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
-                    item.completed 
-                      ? 'bg-success-soft/20 border-success/30' 
-                      : 'border-border hover:bg-accent/50'
-                  }`}
-                  onClick={() => toggleScheduleItem(item.id)}
-                >
-                  <div className="flex items-center gap-2">
-                    {item.completed ? (
-                      <CheckCircle className="w-5 h-5 text-success" />
-                    ) : (
-                      <Circle className="w-5 h-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[120px]">
-                    <Clock className="w-4 h-4" />
-                    {item.startTime}〜{item.endTime}
-                  </div>
-                  <div className="flex-1">
-                    <span className={`${item.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                      {item.title}
-                    </span>
-                  </div>
-                  {item.isHabit && (
-                    <Badge variant="outline" className="text-xs bg-success-soft border-success text-success-foreground">
-                      習慣: {item.habitName}
-                    </Badge>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">今日のスケジュールを設定しましょう</p>
-                {templates.length === 0 ? (
-                  <Button className="mt-3 bg-gradient-to-r from-primary to-primary-glow">
-                    スケジュール作成
-                  </Button>
-                ) : (
-                  <p className="text-xs mt-2">上のテンプレートから選択してください</p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Enhanced Schedule Manager */}
+        <ScheduleManager habits={userData.habits} />
 
         {/* Habits Detailed Progress */}
         <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
@@ -519,7 +342,8 @@ export default function Dashboard() {
               
               <div className="text-center p-3 bg-background/50 rounded-lg">
                 <div className="text-2xl font-bold text-primary">
-                  {todaySchedule.filter(item => item.completed).length}
+                  {/* Schedule completion will be handled by ScheduleManager */}
+                  0
                 </div>
                 <div className="text-xs text-muted-foreground">完了したスケジュール</div>
               </div>
