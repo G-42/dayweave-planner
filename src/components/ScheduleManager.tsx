@@ -306,40 +306,71 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
               {/* Template Management */}
               {templates.length > 0 && (
                 <div className="mb-4 p-4 bg-accent/30 rounded-lg border border-border/50">
-                  <div className="text-sm font-medium mb-2">テンプレート管理</div>
+                  <div className="text-sm font-medium mb-3 flex items-center justify-between">
+                    <span>保存済みテンプレート</span>
+                    <Badge variant="outline" className="text-xs">
+                      {templates.length}個
+                    </Badge>
+                  </div>
                   <div className="space-y-2">
-                    {templates.map(template => (
-                      <div
-                        key={template.id}
-                        className="flex items-center justify-between gap-2 p-2 bg-background/50 rounded border border-border/30"
-                      >
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">{template.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {template.items.length}個の項目
+                    {templates.map(template => {
+                      const isWelcomeTemplate = ['holiday-a', 'holiday-b', 'workday'].includes(template.id);
+                      return (
+                        <div
+                          key={template.id}
+                          className="flex items-center justify-between gap-2 p-3 bg-background/50 rounded border border-border/30 hover:bg-background/70 transition-colors"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm font-medium">{template.name}</div>
+                              {isWelcomeTemplate && (
+                                <Badge variant="outline" className="text-xs bg-primary/10 border-primary/30 text-primary">
+                                  初期設定
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {template.items.length}個の項目 • 
+                              {template.items.filter(item => item.isHabit).length}個の習慣を含む
+                            </div>
+                            {template.items.length > 0 && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {template.items[0].startTime}〜{template.items[template.items.length - 1].endTime}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              onClick={() => applyTemplate(template.id)}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-8 px-3 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                            >
+                              適用
+                            </Button>
+                            {!isWelcomeTemplate && (
+                              <Button
+                                onClick={() => deleteTemplate(template.id)}
+                                size="sm"
+                                variant="ghost"
+                                className="text-xs h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                削除
+                              </Button>
+                            )}
                           </div>
                         </div>
-                        <div className="flex gap-1">
-                          <Button
-                            onClick={() => applyTemplate(template.id)}
-                            size="sm"
-                            variant="outline"
-                            className="text-xs h-7 px-2"
-                          >
-                            適用
-                          </Button>
-                          <Button
-                            onClick={() => deleteTemplate(template.id)}
-                            size="sm"
-                            variant="ghost"
-                            className="text-xs h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            削除
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
+                  {todayItems.length === 0 && (
+                    <div className="mt-3 p-2 bg-primary/5 rounded border border-primary/20">
+                      <div className="text-xs text-primary font-medium">💡 ヒント</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        テンプレートを「適用」すると今日のスケジュールに一括追加されます
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
