@@ -6,12 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { ScheduleItemEditor } from './ScheduleItemEditor';
 import { WeeklyView } from './WeeklyView';
-import { Plus, Clock, CheckCircle, Circle, Target, Calendar, Edit, Trash2, MoreHorizontal, Save } from 'lucide-react';
+import { Plus, Clock, CheckCircle, Circle, Target, Calendar, Edit, Trash2, MoreHorizontal, Save, ChevronDown, Bookmark } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   Dialog,
@@ -63,6 +64,8 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
   const [newItemDate, setNewItemDate] = useState<string>('');
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [isTemplateMenuOpen, setIsTemplateMenuOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
 
   // Load data from localStorage
   useEffect(() => {
@@ -215,6 +218,26 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
     setTemplates(prev => prev.filter(t => t.id !== templateId));
   };
 
+  const handleEditTemplate = (template: Template) => {
+    setEditingTemplate(template);
+    setTemplateName(template.name);
+    setIsTemplateDialogOpen(true);
+  };
+
+  const handleUpdateTemplate = () => {
+    if (!editingTemplate || !templateName.trim()) return;
+
+    setTemplates(prev => prev.map(t => 
+      t.id === editingTemplate.id 
+        ? { ...t, name: templateName.trim() }
+        : t
+    ));
+    
+    setEditingTemplate(null);
+    setTemplateName('');
+    setIsTemplateDialogOpen(false);
+  };
+
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case 'high': return 'text-destructive border-destructive bg-destructive/10';
@@ -280,9 +303,100 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
+                  {/* Template Dropdown */}
+                  {templates.length > 0 && (
+                    <DropdownMenu open={isTemplateMenuOpen} onOpenChange={setIsTemplateMenuOpen}>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-primary/50 text-primary hover:bg-primary/10"
+                        >
+                          <Bookmark className="w-4 h-4 mr-1" />
+                          テンプレート
+                          <ChevronDown className="w-3 h-3 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent 
+                        className="w-80 bg-popover/95 backdrop-blur border-border z-50"
+                        align="end" 
+                        sideOffset={5}
+                      >
+                        <div className="p-2">
+                          <div className="text-sm font-medium mb-2 text-foreground">保存済みテンプレート</div>
+                          {templates.map(template => {
+                            const isWelcomeTemplate = ['holiday-a', 'holiday-b', 'workday'].includes(template.id);
+                            return (
+                              <div
+                                key={template.id}
+                                className="flex items-center justify-between gap-2 p-2 rounded hover:bg-accent/50 transition-colors"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <div className="text-sm font-medium text-foreground truncate">{template.name}</div>
+                                    {isWelcomeTemplate && (
+                                      <Badge variant="outline" className="text-xs bg-primary/10 border-primary/30 text-primary flex-shrink-0">
+                                        初期
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {template.items.length}項目 • {template.items.filter(item => item.isHabit).length}習慣
+                                  </div>
+                                </div>
+                                <div className="flex gap-1 flex-shrink-0">
+                                  <Button
+                                    onClick={() => {
+                                      applyTemplate(template.id);
+                                      setIsTemplateMenuOpen(false);
+                                    }}
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs h-7 px-2 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                                  >
+                                    適用
+                                  </Button>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="text-xs h-7 w-7 p-0"
+                                      >
+                                        <MoreHorizontal className="w-3 h-3" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border z-50">
+                                      <DropdownMenuItem onClick={() => handleEditTemplate(template)}>
+                                        <Edit className="w-3 h-3 mr-2" />
+                                        編集
+                                      </DropdownMenuItem>
+                                      {!isWelcomeTemplate && (
+                                        <DropdownMenuItem 
+                                          onClick={() => deleteTemplate(template.id)}
+                                          className="text-destructive focus:text-destructive"
+                                        >
+                                          <Trash2 className="w-3 h-3 mr-2" />
+                                          削除
+                                        </DropdownMenuItem>
+                                      )}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+
                   {todayItems.length > 0 && (
                     <Button
-                      onClick={() => setIsTemplateDialogOpen(true)}
+                      onClick={() => {
+                        setEditingTemplate(null);
+                        setIsTemplateDialogOpen(true);
+                      }}
                       size="sm"
                       variant="outline"
                       className="border-primary/50 text-primary hover:bg-primary/10"
@@ -290,6 +404,7 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                       テンプレート保存
                     </Button>
                   )}
+                  
                   <Button
                     onClick={() => handleAddNewItem()}
                     size="sm"
@@ -303,77 +418,6 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
             </CardHeader>
 
             <CardContent>
-              {/* Template Management */}
-              {templates.length > 0 && (
-                <div className="mb-4 p-4 bg-accent/30 rounded-lg border border-border/50">
-                  <div className="text-sm font-medium mb-3 flex items-center justify-between">
-                    <span>保存済みテンプレート</span>
-                    <Badge variant="outline" className="text-xs">
-                      {templates.length}個
-                    </Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {templates.map(template => {
-                      const isWelcomeTemplate = ['holiday-a', 'holiday-b', 'workday'].includes(template.id);
-                      return (
-                        <div
-                          key={template.id}
-                          className="flex items-center justify-between gap-2 p-3 bg-background/50 rounded border border-border/30 hover:bg-background/70 transition-colors"
-                        >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <div className="text-sm font-medium">{template.name}</div>
-                              {isWelcomeTemplate && (
-                                <Badge variant="outline" className="text-xs bg-primary/10 border-primary/30 text-primary">
-                                  初期設定
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {template.items.length}個の項目 • 
-                              {template.items.filter(item => item.isHabit).length}個の習慣を含む
-                            </div>
-                            {template.items.length > 0 && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {template.items[0].startTime}〜{template.items[template.items.length - 1].endTime}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex gap-1">
-                            <Button
-                              onClick={() => applyTemplate(template.id)}
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-8 px-3 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
-                            >
-                              適用
-                            </Button>
-                            {!isWelcomeTemplate && (
-                              <Button
-                                onClick={() => deleteTemplate(template.id)}
-                                size="sm"
-                                variant="ghost"
-                                className="text-xs h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                削除
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {todayItems.length === 0 && (
-                    <div className="mt-3 p-2 bg-primary/5 rounded border border-primary/20">
-                      <div className="text-xs text-primary font-medium">💡 ヒント</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        テンプレートを「適用」すると今日のスケジュールに一括追加されます
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
               {/* Schedule Items */}
               {todayItems.length > 0 ? (
                 <div className="space-y-2">
@@ -502,16 +546,25 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
         habits={habits}
       />
 
-      {/* Template Save Dialog */}
-      <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
+      {/* Template Save/Edit Dialog */}
+      <Dialog open={isTemplateDialogOpen} onOpenChange={(open) => {
+        setIsTemplateDialogOpen(open);
+        if (!open) {
+          setEditingTemplate(null);
+          setTemplateName('');
+        }
+      }}>
         <DialogContent className="sm:max-w-[425px] bg-card/95 backdrop-blur border-border">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Save className="w-5 h-5 text-primary" />
-              テンプレートとして保存
+              {editingTemplate ? 'テンプレートを編集' : 'テンプレートとして保存'}
             </DialogTitle>
             <DialogDescription>
-              現在のスケジュールをテンプレートとして保存します。後で再利用できます。
+              {editingTemplate 
+                ? 'テンプレート名を変更できます。'
+                : '現在のスケジュールをテンプレートとして保存します。後で再利用できます。'
+              }
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -525,26 +578,34 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                 className="bg-background border-border"
               />
             </div>
-            <div className="text-sm text-muted-foreground">
-              保存対象: 今日のスケジュール {todayItems.length}個の項目
-            </div>
+            {!editingTemplate && (
+              <div className="text-sm text-muted-foreground">
+                保存対象: 今日のスケジュール {todayItems.length}個の項目
+              </div>
+            )}
+            {editingTemplate && (
+              <div className="text-sm text-muted-foreground">
+                編集対象: {editingTemplate.items.length}個の項目を含むテンプレート
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
                 setIsTemplateDialogOpen(false);
+                setEditingTemplate(null);
                 setTemplateName('');
               }}
             >
               キャンセル
             </Button>
             <Button
-              onClick={saveAsTemplate}
-              disabled={!templateName.trim() || todayItems.length === 0}
+              onClick={editingTemplate ? handleUpdateTemplate : saveAsTemplate}
+              disabled={!templateName.trim() || (!editingTemplate && todayItems.length === 0)}
               className="bg-gradient-to-r from-primary to-primary-glow"
             >
-              保存
+              {editingTemplate ? '更新' : '保存'}
             </Button>
           </DialogFooter>
         </DialogContent>
