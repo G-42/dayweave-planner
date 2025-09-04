@@ -7,8 +7,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Plus, X } from 'lucide-react';
 import { Layout } from '@/components/Layout';
+import { ScheduleTemplateCreator } from '@/components/ScheduleTemplateCreator';
+
+interface Template {
+  id: string;
+  name: string;
+  items: {
+    id: string;
+    time: string;
+    title: string;
+    isHabit: boolean;
+    habitName?: string;
+  }[];
+}
 
 export default function Welcome() {
+  const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [habits, setHabits] = useState<string[]>([]);
   const [habitInput, setHabitInput] = useState('');
@@ -25,13 +39,43 @@ export default function Welcome() {
     setHabits(habits.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
+  const handleBasicInfoSubmit = () => {
     if (name.trim() && habits.length > 0) {
-      // Save to localStorage for now
-      localStorage.setItem('dayweave-user', JSON.stringify({ name: name.trim(), habits }));
-      navigate('/dashboard');
+      setStep(2);
     }
   };
+
+  const handleTemplatesComplete = (templates: Template[]) => {
+    // Save all data to localStorage
+    const userData = {
+      name: name.trim(),
+      habits,
+      templates,
+      setupComplete: true
+    };
+    localStorage.setItem('dayweave-user', JSON.stringify(userData));
+    navigate('/dashboard');
+  };
+
+  const handleBackToBasicInfo = () => {
+    setStep(1);
+  };
+
+  if (step === 2) {
+    return (
+      <Layout showNavigation={false}>
+        <div className="min-h-screen p-4">
+          <div className="max-w-2xl mx-auto">
+            <ScheduleTemplateCreator
+              habits={habits}
+              onComplete={handleTemplatesComplete}
+              onBack={handleBackToBasicInfo}
+            />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout showNavigation={false}>
@@ -104,11 +148,11 @@ export default function Welcome() {
             </div>
 
             <Button
-              onClick={handleSubmit}
+              onClick={handleBasicInfoSubmit}
               disabled={!name.trim() || habits.length === 0}
               className="w-full bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary shadow-primary"
             >
-              はじめる
+              次へ（テンプレート作成）
             </Button>
           </CardContent>
         </Card>
