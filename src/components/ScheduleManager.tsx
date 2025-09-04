@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScheduleItemEditor } from './ScheduleItemEditor';
 import { WeeklyView } from './WeeklyView';
 import { TemplateEditor } from './TemplateEditor';
+import { SavedItemsPanel } from './SavedItemsPanel';
 import { Plus, Clock, CheckCircle, Circle, Target, Calendar, Edit, Trash2, MoreHorizontal, Save, ChevronDown, Bookmark } from 'lucide-react';
 import {
   DropdownMenu,
@@ -68,12 +69,14 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
   const [isTemplateMenuOpen, setIsTemplateMenuOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
+  const [savedItems, setSavedItems] = useState<ScheduleItem[]>([]);
 
   // Load data from localStorage
   useEffect(() => {
     const scheduleData = localStorage.getItem('dayweave-schedule');
     const templatesData = localStorage.getItem('dayweave-templates');
     const userData = localStorage.getItem('dayweave-user');
+    const savedItemsData = localStorage.getItem('dayweave-saved-items');
 
     if (scheduleData) {
       setScheduleItems(JSON.parse(scheduleData));
@@ -101,6 +104,11 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
     );
     
     setTemplates(uniqueTemplates);
+
+    // Load saved items
+    if (savedItemsData) {
+      setSavedItems(JSON.parse(savedItemsData));
+    }
   }, []);
 
   // Save schedule items to localStorage
@@ -117,6 +125,13 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
     }
   }, [templates]);
 
+  // Save saved items to localStorage
+  useEffect(() => {
+    if (savedItems.length >= 0) {
+      localStorage.setItem('dayweave-saved-items', JSON.stringify(savedItems));
+    }
+  }, [savedItems]);
+
   const getTodayItems = () => {
     const today = new Date().toISOString().split('T')[0];
     return scheduleItems
@@ -125,21 +140,42 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
   };
 
   const handleSaveItem = (itemData: Omit<ScheduleItem, 'id'>) => {
+    let newItem: ScheduleItem;
+    
     if (editingItem) {
       // Update existing item
+      newItem = { ...itemData, id: editingItem.id };
       setScheduleItems(prev => prev.map(item =>
-        item.id === editingItem.id
-          ? { ...itemData, id: editingItem.id }
-          : item
+        item.id === editingItem.id ? newItem : item
       ));
     } else {
       // Add new item
-      const newItem: ScheduleItem = {
+      newItem = {
         ...itemData,
         id: Date.now().toString(),
       };
       setScheduleItems(prev => [...prev, newItem]);
     }
+    
+    // Save unique items to saved items (excluding date and completed status)
+    const itemToSave = {
+      ...newItem,
+      date: '', // Remove date specificity
+      completed: false, // Reset completion status
+    };
+    
+    setSavedItems(prev => {
+      const exists = prev.some(item => 
+        item.title === itemToSave.title && 
+        item.startTime === itemToSave.startTime && 
+        item.endTime === itemToSave.endTime
+      );
+      
+      if (!exists) {
+        return [...prev, itemToSave];
+      }
+      return prev;
+    });
     
     setEditingItem(null);
   };
@@ -259,6 +295,39 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
     setIsTemplateEditorOpen(false);
   };
 
+  const handleDeleteSavedItem = (itemId: string) => {
+    setSavedItems(prev => prev.filter(item => item.id !== itemId));
+  };
+
+  const handleDragStart = (e: React.DragEvent, item: ScheduleItem) => {
+    e.dataTransfer.setData('application/json', JSON.stringify(item));
+    e.dataTransfer.effectAllowed = 'copy';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    try {
+      const itemData = JSON.parse(e.dataTransfer.getData('application/json'));
+      const today = new Date().toISOString().split('T')[0];
+      
+      const newItem: ScheduleItem = {
+        ...itemData,
+        id: Date.now().toString(),
+        date: today,
+        completed: false,
+      };
+      
+      setScheduleItems(prev => [...prev, newItem]);
+    } catch (error) {
+      console.error('Failed to parse dropped item:', error);
+    }
+  };
+
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case 'high': return 'text-destructive border-destructive bg-destructive/10';
@@ -301,262 +370,289 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="today" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="today">今日のスケジュール</TabsTrigger>
-          <TabsTrigger value="weekly">週間表示</TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Saved Items */}
+        <div className="lg:col-span-1">
+          <SavedItemsPanel
+            savedItems={savedItems}
+            onDragStart={handleDragStart}
+            onDeleteItem={handleDeleteSavedItem}
+          />
+        </div>
 
-        {/* Today's Schedule */}
-        <TabsContent value="today" className="space-y-4">
-          <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">今日のスケジュール</CardTitle>
-                  <CardDescription>
-                    {new Date().toLocaleDateString('ja-JP', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      weekday: 'long'
-                    })}
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  {/* Template Dropdown */}
-                  {templates.length > 0 && (
-                    <DropdownMenu open={isTemplateMenuOpen} onOpenChange={setIsTemplateMenuOpen}>
-                      <DropdownMenuTrigger asChild>
+        {/* Right Column: Schedule */}
+        <div className="lg:col-span-2">
+          <Tabs defaultValue="today" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="today">今日のスケジュール</TabsTrigger>
+              <TabsTrigger value="weekly">週間表示</TabsTrigger>
+            </TabsList>
+
+            {/* Today's Schedule */}
+            <TabsContent value="today" className="space-y-4">
+              <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">今日のスケジュール</CardTitle>
+                      <CardDescription>
+                        {new Date().toLocaleDateString('ja-JP', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          weekday: 'long'
+                        })}
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      {/* Template Dropdown */}
+                      {templates.length > 0 && (
+                        <DropdownMenu open={isTemplateMenuOpen} onOpenChange={setIsTemplateMenuOpen}>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-primary/50 text-primary hover:bg-primary/10"
+                            >
+                              <Bookmark className="w-4 h-4 mr-1" />
+                              テンプレート
+                              <ChevronDown className="w-3 h-3 ml-1" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent 
+                            className="w-80 bg-popover/95 backdrop-blur border-border z-50"
+                            align="end" 
+                            sideOffset={5}
+                          >
+                            <div className="p-2">
+                              <div className="text-sm font-medium mb-2 text-foreground">保存済みテンプレート</div>
+                              {templates.map(template => {
+                                const isWelcomeTemplate = ['holiday-a', 'holiday-b', 'workday'].includes(template.id);
+                                return (
+                                  <div
+                                    key={template.id}
+                                    className="flex items-center justify-between gap-2 p-2 rounded hover:bg-accent/50 transition-colors"
+                                  >
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <div className="text-sm font-medium text-foreground truncate">{template.name}</div>
+                                        {isWelcomeTemplate && (
+                                          <Badge variant="outline" className="text-xs bg-primary/10 border-primary/30 text-primary flex-shrink-0">
+                                            初期
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {template.items.length}項目 • {template.items.filter(item => item.isHabit).length}習慣
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-1 flex-shrink-0">
+                                      <Button
+                                        onClick={() => {
+                                          applyTemplate(template.id);
+                                          setIsTemplateMenuOpen(false);
+                                        }}
+                                        size="sm"
+                                        variant="outline"
+                                        className="text-xs h-7 px-2 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                                      >
+                                        適用
+                                      </Button>
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="text-xs h-7 w-7 p-0"
+                                          >
+                                            <MoreHorizontal className="w-3 h-3" />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border z-50">
+                                          <DropdownMenuItem onClick={() => handleEditTemplate(template)}>
+                                            <Edit className="w-3 h-3 mr-2" />
+                                            詳細編集
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem onClick={() => handleEditTemplateName(template)}>
+                                            <Edit className="w-3 h-3 mr-2" />
+                                            名前変更
+                                          </DropdownMenuItem>
+                                          {!isWelcomeTemplate && (
+                                            <DropdownMenuItem 
+                                              onClick={() => deleteTemplate(template.id)}
+                                              className="text-destructive focus:text-destructive"
+                                            >
+                                              <Trash2 className="w-3 h-3 mr-2" />
+                                              削除
+                                            </DropdownMenuItem>
+                                          )}
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+
+                      {todayItems.length > 0 && (
                         <Button
+                          onClick={() => {
+                            setEditingTemplate(null);
+                            setIsTemplateDialogOpen(true);
+                          }}
                           size="sm"
                           variant="outline"
                           className="border-primary/50 text-primary hover:bg-primary/10"
                         >
-                          <Bookmark className="w-4 h-4 mr-1" />
-                          テンプレート
-                          <ChevronDown className="w-3 h-3 ml-1" />
+                          テンプレート保存
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent 
-                        className="w-80 bg-popover/95 backdrop-blur border-border z-50"
-                        align="end" 
-                        sideOffset={5}
+                      )}
+                      
+                      <Button
+                        onClick={() => handleAddNewItem()}
+                        size="sm"
+                        className="bg-gradient-to-r from-primary to-primary-glow"
                       >
-                        <div className="p-2">
-                          <div className="text-sm font-medium mb-2 text-foreground">保存済みテンプレート</div>
-                          {templates.map(template => {
-                            const isWelcomeTemplate = ['holiday-a', 'holiday-b', 'workday'].includes(template.id);
-                            return (
-                              <div
-                                key={template.id}
-                                className="flex items-center justify-between gap-2 p-2 rounded hover:bg-accent/50 transition-colors"
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <div className="text-sm font-medium text-foreground truncate">{template.name}</div>
-                                    {isWelcomeTemplate && (
-                                      <Badge variant="outline" className="text-xs bg-primary/10 border-primary/30 text-primary flex-shrink-0">
-                                        初期
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {template.items.length}項目 • {template.items.filter(item => item.isHabit).length}習慣
-                                  </div>
-                                </div>
-                                <div className="flex gap-1 flex-shrink-0">
-                                  <Button
-                                    onClick={() => {
-                                      applyTemplate(template.id);
-                                      setIsTemplateMenuOpen(false);
-                                    }}
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-xs h-7 px-2 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
-                                  >
-                                    適用
-                                  </Button>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="text-xs h-7 w-7 p-0"
-                                      >
-                                        <MoreHorizontal className="w-3 h-3" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border z-50">
-                                      <DropdownMenuItem onClick={() => handleEditTemplate(template)}>
-                                        <Edit className="w-3 h-3 mr-2" />
-                                        詳細編集
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => handleEditTemplateName(template)}>
-                                        <Edit className="w-3 h-3 mr-2" />
-                                        名前変更
-                                      </DropdownMenuItem>
-                                      {!isWelcomeTemplate && (
-                                        <DropdownMenuItem 
-                                          onClick={() => deleteTemplate(template.id)}
-                                          className="text-destructive focus:text-destructive"
-                                        >
-                                          <Trash2 className="w-3 h-3 mr-2" />
-                                          削除
-                                        </DropdownMenuItem>
-                                      )}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-
-                  {todayItems.length > 0 && (
-                    <Button
-                      onClick={() => {
-                        setEditingTemplate(null);
-                        setIsTemplateDialogOpen(true);
-                      }}
-                      size="sm"
-                      variant="outline"
-                      className="border-primary/50 text-primary hover:bg-primary/10"
-                    >
-                      テンプレート保存
-                    </Button>
-                  )}
-                  
-                  <Button
-                    onClick={() => handleAddNewItem()}
-                    size="sm"
-                    className="bg-gradient-to-r from-primary to-primary-glow"
-                  >
-                    <Plus className="w-4 h-4 mr-1" />
-                    追加
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent>
-              {/* Schedule Items */}
-              {todayItems.length > 0 ? (
-                <div className="space-y-2">
-                  {todayItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`flex items-center gap-3 p-4 rounded-lg border transition-colors ${
-                        item.completed
-                          ? 'bg-success-soft/20 border-success/30 opacity-75'
-                          : 'bg-background border-border hover:bg-accent/50'
-                      }`}
-                    >
-                      <button
-                        onClick={() => handleToggleComplete(item.id)}
-                        className="flex-shrink-0"
-                      >
-                        {item.completed ? (
-                          <CheckCircle className="w-5 h-5 text-success" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-muted-foreground hover:text-primary" />
-                        )}
-                      </button>
-
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[120px]">
-                        <Clock className="w-4 h-4" />
-                        {item.startTime}〜{item.endTime}
-                      </div>
-
-                      <div className="flex-1">
-                        <div className={`font-medium ${
-                          item.completed ? 'line-through text-muted-foreground' : 'text-foreground'
-                        }`}>
-                          {item.title}
-                        </div>
-                        
-                        <div className="flex items-center gap-2 mt-1">
-                          {item.priority && (
-                            <Badge variant="outline" className={`text-xs ${getPriorityColor(item.priority)}`}>
-                              {item.priority === 'high' ? '高' : item.priority === 'medium' ? '中' : '低'}優先度
-                            </Badge>
-                          )}
-                          
-                          {item.category && (
-                            <Badge variant="outline" className="text-xs">
-                              {item.category}
-                            </Badge>
-                          )}
-                          
-                          {item.isHabit && (
-                            <Badge variant="outline" className="text-xs bg-success-soft border-success text-success-foreground">
-                              <Target className="w-3 h-3 mr-1" />
-                              習慣: {item.habitName}
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        {item.notes && (
-                          <div className="text-xs text-muted-foreground mt-1 italic">
-                            {item.notes}
-                          </div>
-                        )}
-                      </div>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border">
-                          <DropdownMenuItem onClick={() => handleEditItem(item)}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            編集
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteItem(item.id)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            削除
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        <Plus className="w-4 h-4 mr-1" />
+                        追加
+                      </Button>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">今日のスケジュールがありません</p>
-                  <p className="text-xs mb-4">上のボタンから項目を追加してください</p>
-                  <Button
-                    onClick={() => handleAddNewItem()}
-                    className="bg-gradient-to-r from-primary to-primary-glow"
-                  >
-                    <Plus className="w-4 h-4 mr-1" />
-                    スケジュールを追加
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  </div>
+                </CardHeader>
 
-        {/* Weekly View */}
-        <TabsContent value="weekly">
-          <WeeklyView
-            scheduleItems={scheduleItems}
-            onItemClick={handleEditItem}
-            onAddItem={handleAddNewItem}
-            onToggleComplete={handleToggleComplete}
-          />
-        </TabsContent>
-      </Tabs>
+                <CardContent
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  className="min-h-[200px] relative"
+                >
+                  {/* Drag & Drop Area Hint */}
+                  <div className="absolute inset-0 border-2 border-dashed border-transparent transition-colors hover:border-primary/30 pointer-events-none rounded-lg">
+                    <div className="flex items-center justify-center h-full opacity-0 hover:opacity-100 transition-opacity">
+                      <div className="text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
+                        ここに項目をドロップ
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Schedule Items */}
+                  {todayItems.length > 0 ? (
+                    <div className="space-y-2">
+                      {todayItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className={`flex items-center gap-3 p-4 rounded-lg border transition-colors ${
+                            item.completed
+                              ? 'bg-success-soft/20 border-success/30 opacity-75'
+                              : 'bg-background border-border hover:bg-accent/50'
+                          }`}
+                        >
+                          <button
+                            onClick={() => handleToggleComplete(item.id)}
+                            className="flex-shrink-0"
+                          >
+                            {item.completed ? (
+                              <CheckCircle className="w-5 h-5 text-success" />
+                            ) : (
+                              <Circle className="w-5 h-5 text-muted-foreground hover:text-primary" />
+                            )}
+                          </button>
+
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[120px]">
+                            <Clock className="w-4 h-4" />
+                            {item.startTime}〜{item.endTime}
+                          </div>
+
+                          <div className="flex-1">
+                            <div className={`font-medium ${
+                              item.completed ? 'line-through text-muted-foreground' : 'text-foreground'
+                            }`}>
+                              {item.title}
+                            </div>
+                            
+                            <div className="flex items-center gap-2 mt-1">
+                              {item.priority && (
+                                <Badge variant="outline" className={`text-xs ${getPriorityColor(item.priority)}`}>
+                                  {item.priority === 'high' ? '高' : item.priority === 'medium' ? '中' : '低'}優先度
+                                </Badge>
+                              )}
+                              
+                              {item.category && (
+                                <Badge variant="outline" className="text-xs">
+                                  {item.category}
+                                </Badge>
+                              )}
+                              
+                              {item.isHabit && (
+                                <Badge variant="outline" className="text-xs bg-success-soft border-success text-success-foreground">
+                                  <Target className="w-3 h-3 mr-1" />
+                                  習慣: {item.habitName}
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            {item.notes && (
+                              <div className="text-xs text-muted-foreground mt-1 italic">
+                                {item.notes}
+                              </div>
+                            )}
+                          </div>
+
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border">
+                              <DropdownMenuItem onClick={() => handleEditItem(item)}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                編集
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteItem(item.id)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                削除
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">今日のスケジュールがありません</p>
+                      <p className="text-xs mb-4">項目をドラッグ&ドロップまたは上のボタンから追加してください</p>
+                      <Button
+                        onClick={() => handleAddNewItem()}
+                        className="bg-gradient-to-r from-primary to-primary-glow"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        スケジュールを追加
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Weekly View */}
+            <TabsContent value="weekly">
+              <WeeklyView
+                scheduleItems={scheduleItems}
+                onItemClick={handleEditItem}
+                onAddItem={handleAddNewItem}
+                onToggleComplete={handleToggleComplete}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
 
       {/* Schedule Item Editor */}
       <ScheduleItemEditor
