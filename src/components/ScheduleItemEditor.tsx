@@ -21,7 +21,7 @@ interface ScheduleItem {
   completed?: boolean;
   date?: string;
   category?: string;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: 'none' | 'low' | 'medium' | 'high';
   notes?: string;
 }
 
@@ -44,7 +44,7 @@ export const ScheduleItemEditor = ({ item, isOpen, onClose, onSave, habits }: Sc
     habitName: item?.habitName || '',
     date: item?.date || new Date().toISOString().split('T')[0],
     category: item?.category || 'その他',
-    priority: item?.priority || 'medium' as 'low' | 'medium' | 'high',
+    priority: item?.priority || 'none' as 'none' | 'low' | 'medium' | 'high',
     notes: item?.notes || '',
   });
 
@@ -73,6 +73,7 @@ export const ScheduleItemEditor = ({ item, isOpen, onClose, onSave, habits }: Sc
       case 'high': return 'text-destructive border-destructive bg-destructive/10';
       case 'medium': return 'text-warning border-warning bg-warning/10';
       case 'low': return 'text-success border-success bg-success/10';
+      case 'none': return 'text-muted-foreground border-muted-foreground/30 bg-muted/10';
       default: return 'text-muted-foreground border-border bg-background';
     }
   };
@@ -82,6 +83,7 @@ export const ScheduleItemEditor = ({ item, isOpen, onClose, onSave, habits }: Sc
       case 'high': return '高優先度';
       case 'medium': return '中優先度';
       case 'low': return '低優先度';
+      case 'none': return 'なし';
       default: return '';
     }
   };
@@ -193,12 +195,13 @@ export const ScheduleItemEditor = ({ item, isOpen, onClose, onSave, habits }: Sc
               <Label>優先度</Label>
               <Select 
                 value={formData.priority} 
-                onValueChange={(value: 'low' | 'medium' | 'high') => setFormData(prev => ({ ...prev, priority: value }))}
+                onValueChange={(value: 'none' | 'low' | 'medium' | 'high') => setFormData(prev => ({ ...prev, priority: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover/95 backdrop-blur border-border">
+                  <SelectItem value="none">なし</SelectItem>
                   <SelectItem value="high">高優先度</SelectItem>
                   <SelectItem value="medium">中優先度</SelectItem>
                   <SelectItem value="low">低優先度</SelectItem>
@@ -207,16 +210,18 @@ export const ScheduleItemEditor = ({ item, isOpen, onClose, onSave, habits }: Sc
             </div>
           </div>
 
-          {/* Priority Preview */}
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className={`text-xs ${getPriorityColor(formData.priority)}`}>
-              <Target className="w-3 h-3 mr-1" />
-              {getPriorityLabel(formData.priority)}
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              {formData.category}
-            </Badge>
-          </div>
+          {/* Priority Preview - Only show if not 'none' */}
+          {formData.priority !== 'none' && (
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className={`text-xs ${getPriorityColor(formData.priority)}`}>
+                <Target className="w-3 h-3 mr-1" />
+                {getPriorityLabel(formData.priority)}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                {formData.category}
+              </Badge>
+            </div>
+          )}
 
           {/* Habit Toggle */}
           <div className="space-y-3">

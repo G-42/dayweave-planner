@@ -13,7 +13,7 @@ interface ScheduleItem {
   completed?: boolean;
   date: string;
   category?: string;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: 'none' | 'low' | 'medium' | 'high';
   notes?: string;
 }
 

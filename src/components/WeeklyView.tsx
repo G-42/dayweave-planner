@@ -16,7 +16,7 @@ interface ScheduleItem {
   completed?: boolean;
   date: string;
   category?: string;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: 'none' | 'low' | 'medium' | 'high';
   notes?: string;
 }
 
@@ -45,6 +45,7 @@ export const WeeklyView = ({ scheduleItems, onItemClick, onAddItem, onToggleComp
       case 'high': return 'border-l-destructive bg-destructive/5';
       case 'medium': return 'border-l-warning bg-warning/5';
       case 'low': return 'border-l-success bg-success/5';
+      case 'none': return 'border-l-muted-foreground bg-muted/5';
       default: return 'border-l-primary bg-primary/5';
     }
   };

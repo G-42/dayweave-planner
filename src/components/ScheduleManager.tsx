@@ -37,7 +37,7 @@ interface ScheduleItem {
   completed?: boolean;
   date: string;
   category?: string;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: 'none' | 'low' | 'medium' | 'high';
   notes?: string;
 }
 
@@ -219,7 +219,7 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
       completed: false,
       date: today,
       category: templateItem.isHabit ? '習慣' : 'その他',
-      priority: 'medium' as const,
+      priority: 'none' as const,
     }));
 
     // Remove existing items for today and add template items
@@ -334,6 +334,7 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
       case 'high': return 'text-destructive border-destructive bg-destructive/10';
       case 'medium': return 'text-warning border-warning bg-warning/10';
       case 'low': return 'text-success border-success bg-success/10';
+      case 'none': return 'text-muted-foreground border-muted-foreground/30 bg-muted/10';
       default: return 'text-muted-foreground border-border bg-background';
     }
   };
@@ -649,7 +650,7 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                             </div>
                             
                             <div className="flex items-center gap-2 mt-1">
-                              {item.priority && (
+                              {item.priority && item.priority !== 'none' && (
                                 <Badge variant="outline" className={`text-xs ${getPriorityColor(item.priority)}`}>
                                   {item.priority === 'high' ? '高' : item.priority === 'medium' ? '中' : '低'}優先度
                                 </Badge>
