@@ -6,13 +6,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { ScheduleItemEditor } from './ScheduleItemEditor';
 import { WeeklyView } from './WeeklyView';
-import { Plus, Clock, CheckCircle, Circle, Target, Calendar, Edit, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Clock, CheckCircle, Circle, Target, Calendar, Edit, Trash2, MoreHorizontal, Save } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface ScheduleItem {
   id: string;
@@ -51,6 +61,8 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
   const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [newItemDate, setNewItemDate] = useState<string>('');
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
 
   // Load data from localStorage
   useEffect(() => {
@@ -72,6 +84,13 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
       localStorage.setItem('dayweave-schedule', JSON.stringify(scheduleItems));
     }
   }, [scheduleItems]);
+
+  // Save templates to localStorage
+  useEffect(() => {
+    if (templates.length >= 0) {
+      localStorage.setItem('dayweave-templates', JSON.stringify(templates));
+    }
+  }, [templates]);
 
   const getTodayItems = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -148,6 +167,34 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
     ]);
   };
 
+  const saveAsTemplate = () => {
+    if (!templateName.trim()) return;
+
+    const todayItems = getTodayItems();
+    if (todayItems.length === 0) return;
+
+    const newTemplate: Template = {
+      id: Date.now().toString(),
+      name: templateName,
+      items: todayItems.map(item => ({
+        id: item.id,
+        startTime: item.startTime,
+        endTime: item.endTime,
+        title: item.title,
+        isHabit: item.isHabit,
+        habitName: item.habitName,
+      })),
+    };
+
+    setTemplates(prev => [...prev, newTemplate]);
+    setTemplateName('');
+    setIsTemplateDialogOpen(false);
+  };
+
+  const deleteTemplate = (templateId: string) => {
+    setTemplates(prev => prev.filter(t => t.id !== templateId));
+  };
+
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case 'high': return 'text-destructive border-destructive bg-destructive/10';
@@ -212,33 +259,65 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                     })}
                   </CardDescription>
                 </div>
-                <Button
-                  onClick={() => handleAddNewItem()}
-                  size="sm"
-                  className="bg-gradient-to-r from-primary to-primary-glow"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  追加
-                </Button>
+                <div className="flex gap-2">
+                  {todayItems.length > 0 && (
+                    <Button
+                      onClick={() => setIsTemplateDialogOpen(true)}
+                      size="sm"
+                      variant="outline"
+                      className="border-primary/50 text-primary hover:bg-primary/10"
+                    >
+                      テンプレート保存
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => handleAddNewItem()}
+                    size="sm"
+                    className="bg-gradient-to-r from-primary to-primary-glow"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    追加
+                  </Button>
+                </div>
               </div>
             </CardHeader>
 
             <CardContent>
-              {/* Template Quick Apply */}
-              {templates.length > 0 && todayItems.length === 0 && (
+              {/* Template Management */}
+              {templates.length > 0 && (
                 <div className="mb-4 p-4 bg-accent/30 rounded-lg border border-border/50">
-                  <div className="text-sm font-medium mb-2">テンプレートから追加</div>
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="text-sm font-medium mb-2">テンプレート管理</div>
+                  <div className="space-y-2">
                     {templates.map(template => (
-                      <Button
+                      <div
                         key={template.id}
-                        onClick={() => applyTemplate(template.id)}
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
+                        className="flex items-center justify-between gap-2 p-2 bg-background/50 rounded border border-border/30"
                       >
-                        {template.name}
-                      </Button>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">{template.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {template.items.length}個の項目
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            onClick={() => applyTemplate(template.id)}
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7 px-2"
+                          >
+                            適用
+                          </Button>
+                          <Button
+                            onClick={() => deleteTemplate(template.id)}
+                            size="sm"
+                            variant="ghost"
+                            className="text-xs h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            削除
+                          </Button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -371,6 +450,54 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
         onSave={handleSaveItem}
         habits={habits}
       />
+
+      {/* Template Save Dialog */}
+      <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-card/95 backdrop-blur border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Save className="w-5 h-5 text-primary" />
+              テンプレートとして保存
+            </DialogTitle>
+            <DialogDescription>
+              現在のスケジュールをテンプレートとして保存します。後で再利用できます。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="template-name">テンプレート名</Label>
+              <Input
+                id="template-name"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="例: 平日のスケジュール、休日プラン"
+                className="bg-background border-border"
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              保存対象: 今日のスケジュール {todayItems.length}個の項目
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsTemplateDialogOpen(false);
+                setTemplateName('');
+              }}
+            >
+              キャンセル
+            </Button>
+            <Button
+              onClick={saveAsTemplate}
+              disabled={!templateName.trim() || todayItems.length === 0}
+              className="bg-gradient-to-r from-primary to-primary-glow"
+            >
+              保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
