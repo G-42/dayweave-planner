@@ -8,7 +8,7 @@ import { ScheduleItemEditor } from './ScheduleItemEditor';
 import { WeeklyView } from './WeeklyView';
 import { TemplateEditor } from './TemplateEditor';
 import { SavedItemsPanel } from './SavedItemsPanel';
-import { Plus, Clock, CheckCircle, Circle, Target, Calendar, Edit, Trash2, MoreHorizontal, Save, ChevronDown, Bookmark } from 'lucide-react';
+import { Plus, Clock, CheckCircle, Circle, Target, Calendar, Edit, Trash2, MoreHorizontal, Save, ChevronDown, Bookmark, Archive } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +70,7 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
   const [savedItems, setSavedItems] = useState<ScheduleItem[]>([]);
+  const [isSavedItemsMenuOpen, setIsSavedItemsMenuOpen] = useState(false);
 
   // Load data from localStorage
   useEffect(() => {
@@ -370,18 +371,9 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Saved Items */}
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+        {/* Schedule Section */}
         <div className="lg:col-span-1">
-          <SavedItemsPanel
-            savedItems={savedItems}
-            onDragStart={handleDragStart}
-            onDeleteItem={handleDeleteSavedItem}
-          />
-        </div>
-
-        {/* Right Column: Schedule */}
-        <div className="lg:col-span-2">
           <Tabs defaultValue="today" className="space-y-4">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="today">今日のスケジュール</TabsTrigger>
@@ -405,6 +397,90 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
+                      {/* Saved Items Dropdown */}
+                      {savedItems.length > 0 && (
+                        <DropdownMenu open={isSavedItemsMenuOpen} onOpenChange={setIsSavedItemsMenuOpen}>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-accent text-foreground hover:bg-accent/50"
+                            >
+                              <Archive className="w-4 h-4 mr-1" />
+                              項目
+                              <ChevronDown className="w-3 h-3 ml-1" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent 
+                            className="w-96 bg-popover/95 backdrop-blur border-border z-50 max-h-80 overflow-y-auto"
+                            align="end" 
+                            sideOffset={5}
+                          >
+                            <div className="p-2">
+                              <div className="text-sm font-medium mb-2 text-foreground">保存済み項目</div>
+                              <div className="text-xs text-muted-foreground mb-3">
+                                ドラッグして下のエリアにドロップ ({savedItems.length}個)
+                              </div>
+                              
+                              {/* Group saved items by category */}
+                              {Object.entries(savedItems.reduce((acc, item) => {
+                                const category = item.isHabit ? '習慣' : item.category || 'その他';
+                                if (!acc[category]) acc[category] = [];
+                                acc[category].push(item);
+                                return acc;
+                              }, {} as Record<string, ScheduleItem[]>)).map(([category, items]) => (
+                                <div key={category} className="mb-3">
+                                  <div className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-2">
+                                    <span>{category}</span>
+                                    <Badge variant="outline" className="text-xs h-4">
+                                      {items.length}
+                                    </Badge>
+                                  </div>
+                                  <div className="space-y-1">
+                                    {items.map((item) => (
+                                      <div
+                                        key={item.id}
+                                        draggable
+                                        onDragStart={(e) => handleDragStart(e, item)}
+                                        className="group flex items-center gap-2 p-2 rounded hover:bg-accent/50 transition-all cursor-grab active:cursor-grabbing text-xs"
+                                      >
+                                        <div className="flex items-center gap-1 text-muted-foreground min-w-[70px]">
+                                          <Clock className="w-3 h-3" />
+                                          {item.startTime}〜{item.endTime}
+                                        </div>
+                                        
+                                        <div className="flex-1 truncate">
+                                          <div className="font-medium text-foreground truncate">
+                                            {item.title}
+                                          </div>
+                                          {item.isHabit && (
+                                            <div className="text-xs text-success truncate">
+                                              習慣: {item.habitName}
+                                            </div>
+                                          )}
+                                        </div>
+                                        
+                                        <Button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteSavedItem(item.id);
+                                          }}
+                                          size="sm"
+                                          variant="ghost"
+                                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+
                       {/* Template Dropdown */}
                       {templates.length > 0 && (
                         <DropdownMenu open={isTemplateMenuOpen} onOpenChange={setIsTemplateMenuOpen}>
