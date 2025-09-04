@@ -9,7 +9,8 @@ import { Plus, X, Clock, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface ScheduleItem {
   id: string;
-  time: string;
+  startTime: string;
+  endTime: string;
   title: string;
   isHabit: boolean;
   habitName?: string;
@@ -43,17 +44,25 @@ export const ScheduleTemplateCreator = ({ habits, onComplete, onBack }: Schedule
     }))
   );
   const [newItem, setNewItem] = useState({
-    time: '',
+    startTime: '',
+    endTime: '',
     title: '',
     isHabit: false,
     habitName: '',
   });
 
   const addScheduleItem = () => {
-    if (newItem.time && newItem.title) {
+    if (newItem.startTime && newItem.endTime && newItem.title) {
+      // Validate that end time is after start time
+      if (newItem.endTime <= newItem.startTime) {
+        alert('終了時刻は開始時刻より後に設定してください');
+        return;
+      }
+
       const item: ScheduleItem = {
         id: Date.now().toString(),
-        time: newItem.time,
+        startTime: newItem.startTime,
+        endTime: newItem.endTime,
         title: newItem.title,
         isHabit: newItem.isHabit,
         habitName: newItem.isHabit ? newItem.habitName : undefined,
@@ -61,11 +70,11 @@ export const ScheduleTemplateCreator = ({ habits, onComplete, onBack }: Schedule
 
       setTemplates(prev => prev.map((template, index) => 
         index === currentTemplate 
-          ? { ...template, items: [...template.items, item].sort((a, b) => a.time.localeCompare(b.time)) }
+          ? { ...template, items: [...template.items, item].sort((a, b) => a.startTime.localeCompare(b.startTime)) }
           : template
       ));
 
-      setNewItem({ time: '', title: '', isHabit: false, habitName: '' });
+      setNewItem({ startTime: '', endTime: '', title: '', isHabit: false, habitName: '' });
     }
   };
 
@@ -159,15 +168,26 @@ export const ScheduleTemplateCreator = ({ habits, onComplete, onBack }: Schedule
           <CardDescription>時刻と内容を入力してください</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="time">時刻</Label>
-              <Input
-                id="time"
-                type="time"
-                value={newItem.time}
-                onChange={(e) => setNewItem(prev => ({ ...prev, time: e.target.value }))}
-              />
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="startTime">開始時刻</Label>
+                <Input
+                  id="startTime"
+                  type="time"
+                  value={newItem.startTime}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, startTime: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endTime">終了時刻</Label>
+                <Input
+                  id="endTime"
+                  type="time"
+                  value={newItem.endTime}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, endTime: e.target.value }))}
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="title">内容</Label>
@@ -175,7 +195,7 @@ export const ScheduleTemplateCreator = ({ habits, onComplete, onBack }: Schedule
                 id="title"
                 value={newItem.title}
                 onChange={(e) => setNewItem(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="例: 朝食、運動"
+                placeholder="例: 朝食、運動、読書"
               />
             </div>
           </div>
@@ -213,7 +233,7 @@ export const ScheduleTemplateCreator = ({ habits, onComplete, onBack }: Schedule
 
           <Button
             onClick={addScheduleItem}
-            disabled={!newItem.time || !newItem.title || (newItem.isHabit && !newItem.habitName)}
+            disabled={!newItem.startTime || !newItem.endTime || !newItem.title || (newItem.isHabit && !newItem.habitName)}
             className="w-full bg-gradient-to-r from-primary to-primary-glow"
           >
             <Plus className="w-4 h-4 mr-1" />
@@ -238,9 +258,9 @@ export const ScheduleTemplateCreator = ({ habits, onComplete, onBack }: Schedule
                   key={item.id}
                   className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors"
                 >
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[60px]">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[120px]">
                     <Clock className="w-4 h-4" />
-                    {item.time}
+                    {item.startTime}〜{item.endTime}
                   </div>
                   <div className="flex-1">
                     <span className="text-foreground">{item.title}</span>

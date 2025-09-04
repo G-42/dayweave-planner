@@ -14,7 +14,8 @@ interface Template {
   name: string;
   items: {
     id: string;
-    time: string;
+    startTime: string;
+    endTime: string;
     title: string;
     isHabit: boolean;
     habitName?: string;
