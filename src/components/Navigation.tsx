@@ -1,4 +1,4 @@
-import { Calendar, CheckSquare, Target } from 'lucide-react';
+import { Calendar, CheckSquare, Target, TrendingUp } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 export const Navigation = () => {
@@ -8,6 +8,7 @@ export const Navigation = () => {
     { id: 'dashboard', label: 'ホーム', icon: Calendar, path: '/dashboard' },
     { id: 'todos', label: 'タスク', icon: CheckSquare, path: '/todos' },
     { id: 'habits', label: '習慣', icon: Target, path: '/habits' },
+    { id: 'analytics', label: '分析', icon: TrendingUp, path: '/analytics' },
   ];
 
   return (
