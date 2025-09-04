@@ -68,14 +68,34 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
   useEffect(() => {
     const scheduleData = localStorage.getItem('dayweave-schedule');
     const templatesData = localStorage.getItem('dayweave-templates');
+    const userData = localStorage.getItem('dayweave-user');
 
     if (scheduleData) {
       setScheduleItems(JSON.parse(scheduleData));
     }
 
+    // Load templates from both sources
+    let allTemplates: Template[] = [];
+    
+    // Load from dedicated templates storage
     if (templatesData) {
-      setTemplates(JSON.parse(templatesData));
+      allTemplates = [...allTemplates, ...JSON.parse(templatesData)];
     }
+    
+    // Load from welcome setup data
+    if (userData) {
+      const userSetup = JSON.parse(userData);
+      if (userSetup.templates && Array.isArray(userSetup.templates)) {
+        allTemplates = [...allTemplates, ...userSetup.templates];
+      }
+    }
+    
+    // Remove duplicates based on template id
+    const uniqueTemplates = allTemplates.filter((template, index, self) => 
+      index === self.findIndex(t => t.id === template.id)
+    );
+    
+    setTemplates(uniqueTemplates);
   }, []);
 
   // Save schedule items to localStorage
