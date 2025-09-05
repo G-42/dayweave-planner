@@ -16,7 +16,7 @@ interface Todo {
   id: string;
   title: string;
   completed: boolean;
-  priority: 'low' | 'medium' | 'high';
+  priority: 'none' | 'low' | 'medium' | 'high';
   category: string;
   dueDate?: string;
   createdAt: string;
@@ -37,7 +37,7 @@ export default function Todos() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState('');
   const [newCategory, setNewCategory] = useState('');
-  const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [newPriority, setNewPriority] = useState<'none' | 'low' | 'medium' | 'high'>('none');
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
   const [scheduleTime, setScheduleTime] = useState({ startTime: '', endTime: '' });
@@ -70,7 +70,7 @@ export default function Todos() {
       };
       setTodos([...todos, todo]);
       setNewTodo('');
-      setNewPriority('medium');
+      setNewPriority('none');
     }
   };
 
@@ -191,18 +191,20 @@ export default function Todos() {
                         <Badge variant="outline" className="text-xs">
                           {todo.category}
                         </Badge>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${
-                            todo.priority === 'high' 
-                              ? 'text-destructive border-destructive bg-destructive/10'
-                              : todo.priority === 'medium'
-                              ? 'text-warning border-warning bg-warning/10'
-                              : 'text-success border-success bg-success/10'
-                          }`}
-                        >
-                          {todo.priority === 'high' ? '高' : todo.priority === 'medium' ? '中' : '低'}優先度
-                        </Badge>
+                        {todo.priority !== 'none' && (
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${
+                              todo.priority === 'high' 
+                                ? 'text-destructive border-destructive bg-destructive/10'
+                                : todo.priority === 'medium'
+                                ? 'text-warning border-warning bg-warning/10'
+                                : 'text-success border-success bg-success/10'
+                            }`}
+                          >
+                            {todo.priority === 'high' ? '高' : todo.priority === 'medium' ? '中' : '低'}優先度
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     
@@ -261,11 +263,12 @@ export default function Todos() {
                   </SelectContent>
                 </Select>
 
-                <Select value={newPriority} onValueChange={(value: 'low' | 'medium' | 'high') => setNewPriority(value)}>
+                <Select value={newPriority} onValueChange={(value: 'none' | 'low' | 'medium' | 'high') => setNewPriority(value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="優先度選択" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">優先度なし</SelectItem>
                     <SelectItem value="low">低優先度</SelectItem>
                     <SelectItem value="medium">中優先度</SelectItem>
                     <SelectItem value="high">高優先度</SelectItem>
