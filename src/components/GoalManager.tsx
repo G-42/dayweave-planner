@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Target, Calendar, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Target, Calendar, TrendingUp, ChevronDown, ChevronRight, Trash2, CheckCircle } from 'lucide-react';
 import { format, addMonths, addWeeks, isAfter, isBefore } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { GoalHierarchy } from './GoalHierarchy';
@@ -293,6 +293,15 @@ export const GoalManager = () => {
     setCompletedGoalTitle('');
   };
 
+  const deleteGoal = (goalId: string) => {
+    setBigGoals(prev => prev.filter(goal => goal.id !== goalId));
+    toast({
+      title: "目標を削除しました",
+      description: "おつかれさまでした！",
+      duration: 3000,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <Fireworks show={showFireworks} onComplete={handleFireworksComplete} />
@@ -392,6 +401,7 @@ export const GoalManager = () => {
           const progress = getProgress(goal);
           const timeRemaining = getTimeRemaining(goal.deadline);
           const isExpanded = expandedGoals.has(goal.id);
+          const isCompleted = progress >= 100 && goal.currentValue >= goal.targetValue;
           
           return (
             <Card key={goal.id} className="shadow-medium border-0 bg-card/90 backdrop-blur">
@@ -418,6 +428,23 @@ export const GoalManager = () => {
                           <Target className="w-3 h-3 mr-1" />
                           {goal.targetValue}{goal.unit}
                         </Badge>
+                        {isCompleted && (
+                          <>
+                            <Badge className="text-xs bg-success text-success-foreground">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              達成！
+                            </Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deleteGoal(goal.id)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="w-3 h-3 mr-1" />
+                              削除
+                            </Button>
+                          </>
+                        )}
                       </div>
                       
                       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
