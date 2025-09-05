@@ -84,7 +84,7 @@ export default function Welcome() {
         <Card className="w-full max-w-md shadow-large border-0 bg-card/90 backdrop-blur">
           <CardHeader className="text-center space-y-2">
             <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              DayWeave
+              Fulfill
             </CardTitle>
             <CardDescription className="text-base">
               あなたの名前と習慣化したいタスクを設定しましょう
