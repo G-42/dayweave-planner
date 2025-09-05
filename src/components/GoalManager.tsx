@@ -9,6 +9,8 @@ import { Plus, Target, Calendar, TrendingUp, ChevronDown, ChevronRight } from 'l
 import { format, addMonths, addWeeks, isAfter, isBefore } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { GoalHierarchy } from './GoalHierarchy';
+import { Fireworks } from './Fireworks';
+import { toast } from '@/hooks/use-toast';
 
 interface DailyTask {
   id: string;
@@ -53,6 +55,8 @@ export const GoalManager = () => {
   const [bigGoals, setBigGoals] = useState<BigGoal[]>([]);
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showFireworks, setShowFireworks] = useState(false);
+  const [completedGoalTitle, setCompletedGoalTitle] = useState('');
   
   // Add form states
   const [newGoalTitle, setNewGoalTitle] = useState('');
@@ -73,6 +77,48 @@ export const GoalManager = () => {
     if (bigGoals.length >= 0) {
       localStorage.setItem('dayweave-goals', JSON.stringify(bigGoals));
     }
+  }, [bigGoals]);
+
+  // Check for expired goals and completed goals
+  useEffect(() => {
+    const now = new Date();
+    const expiredGoals: BigGoal[] = [];
+    const completedGoals: BigGoal[] = [];
+    
+    bigGoals.forEach(goal => {
+      const deadline = new Date(goal.deadline);
+      const progress = getProgress(goal);
+      
+      // Check if goal is completed (100% progress)
+      if (progress >= 100 && goal.currentValue >= goal.targetValue && !completedGoals.some(cg => cg.id === goal.id)) {
+        completedGoals.push(goal);
+      }
+      
+      // Check if goal is expired
+      if (deadline < now && !expiredGoals.some(eg => eg.id === goal.id)) {
+        expiredGoals.push(goal);
+      }
+    });
+
+    // Handle completed goals
+    if (completedGoals.length > 0) {
+      const firstCompleted = completedGoals[0];
+      setCompletedGoalTitle(firstCompleted.title);
+      setShowFireworks(true);
+    }
+
+    // Handle expired goals
+    expiredGoals.forEach(goal => {
+      const achievementPercentage = Math.round(getProgress(goal));
+      toast({
+        title: "目標期限終了",
+        description: `「${goal.title}」は${achievementPercentage}%達成しました！`,
+        duration: 5000,
+      });
+      
+      // Remove expired goal after showing message
+      setBigGoals(prev => prev.filter(g => g.id !== goal.id));
+    });
   }, [bigGoals]);
 
   const addBigGoal = () => {
@@ -175,9 +221,21 @@ export const GoalManager = () => {
   };
 
   const updateCurrentValue = (goalId: string, value: number) => {
-    setBigGoals(bigGoals.map(goal =>
-      goal.id === goalId ? { ...goal, currentValue: value } : goal
-    ));
+    setBigGoals(prev => prev.map(goal => {
+      if (goal.id === goalId) {
+        const updatedGoal = { ...goal, currentValue: value };
+        const progress = (value / goal.targetValue) * 100;
+        
+        // Check if goal just got completed
+        if (progress >= 100 && value >= goal.targetValue && goal.currentValue < goal.targetValue) {
+          setCompletedGoalTitle(goal.title);
+          setShowFireworks(true);
+        }
+        
+        return updatedGoal;
+      }
+      return goal;
+    }));
   };
 
   const toggleExpanded = (goalId: string) => {
@@ -230,8 +288,14 @@ export const GoalManager = () => {
   const todayTasks = getTodayTasks();
   const completedTodayTasks = todayTasks.filter(task => task.completed).length;
 
+  const handleFireworksComplete = () => {
+    setShowFireworks(false);
+    setCompletedGoalTitle('');
+  };
+
   return (
     <div className="space-y-6">
+      <Fireworks show={showFireworks} onComplete={handleFireworksComplete} />
       {/* Today's Tasks Summary */}
       {todayTasks.length > 0 && (
         <Card className="shadow-medium border-0 bg-gradient-to-r from-primary/10 to-primary-soft/20 backdrop-blur">
