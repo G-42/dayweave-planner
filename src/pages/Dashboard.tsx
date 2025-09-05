@@ -93,23 +93,17 @@ export default function Dashboard() {
       setHabitProgress(progress);
     }
 
-    // Load today's important todos
+    // Load today's todos (including both important and simple tasks)
     if (todosData) {
       const todos = JSON.parse(todosData);
       
-      // Filter for today's important tasks (high priority, due today, or overdue)
-      const importantTodos = todos.filter((todo: any) => {
+      // Get all incomplete todos for today
+      const todayTodos = todos.filter((todo: any) => {
         if (todo.completed) return false;
-        if (todo.priority === 'high') return true;
-        if (todo.dueDate) {
-          const dueDate = new Date(todo.dueDate);
-          const todayDate = new Date();
-          return dueDate <= todayDate;
-        }
-        return false;
-      }).slice(0, 5); // Show max 5 important todos
+        return true; // Show all incomplete todos
+      });
 
-      setTodosToday(importantTodos);
+      setTodosToday(todayTodos);
     }
   }, []);
 
@@ -158,7 +152,7 @@ export default function Dashboard() {
             <CardHeader>
               <CardTitle className="text-lg">今日のタスク</CardTitle>
               <CardDescription>
-                目標とは別の今日やることリスト
+                今日やることリスト（{todosToday.length}件）
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -188,6 +182,20 @@ export default function Dashboard() {
                         <Badge variant="outline" className="text-xs">
                           {todo.category}
                         </Badge>
+                        {todo.priority !== 'medium' && (
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${
+                              todo.priority === 'high' 
+                                ? 'text-destructive border-destructive bg-destructive/10'
+                                : todo.priority === 'low'
+                                ? 'text-success border-success bg-success/10'
+                                : 'text-muted-foreground border-border bg-background'
+                            }`}
+                          >
+                            {todo.priority === 'high' ? '高' : todo.priority === 'low' ? '低' : '中'}優先度
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -95,14 +95,36 @@ export default function Todos() {
 
   const addToSchedule = () => {
     if (selectedTodo && scheduleTime.startTime && scheduleTime.endTime) {
-      // Here you would add logic to add the todo to today's schedule
-      // This would integrate with your ScheduleManager component
-      console.log('Adding to schedule:', selectedTodo, scheduleTime);
+      // Add the todo to today's schedule
+      const today = new Date().toISOString().split('T')[0];
+      const scheduleItem = {
+        id: Date.now().toString(),
+        startTime: scheduleTime.startTime,
+        endTime: scheduleTime.endTime,
+        title: selectedTodo.title,
+        isHabit: false,
+        completed: false,
+        date: today,
+        category: selectedTodo.category,
+        priority: selectedTodo.priority as 'none' | 'low' | 'medium' | 'high' || 'none',
+        notes: `単発タスクより追加: ${selectedTodo.title}`,
+      };
+
+      // Add to schedule
+      const scheduleData = localStorage.getItem('dayweave-schedule');
+      const currentSchedule = scheduleData ? JSON.parse(scheduleData) : [];
+      const updatedSchedule = [...currentSchedule, scheduleItem];
+      localStorage.setItem('dayweave-schedule', JSON.stringify(updatedSchedule));
+
+      console.log('タスクをスケジュールに追加しました:', scheduleItem);
       
       // Close dialog and reset
       setIsScheduleDialogOpen(false);
       setSelectedTodo(null);
       setScheduleTime({ startTime: '', endTime: '' });
+
+      // Show success feedback
+      alert('タスクがスケジュールに追加されました！');
     }
   };
 
