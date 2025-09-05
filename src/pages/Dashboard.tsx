@@ -149,97 +149,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Habit Progress Overview */}
-        <Card className="shadow-medium border-0 bg-gradient-to-r from-success/10 to-success-soft/20 backdrop-blur">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-success">
-                {completedHabits}/{totalHabits}
-              </div>
-              <div className="text-sm text-success-foreground">
-                今日の習慣達成率 {Math.round(habitCompletionRate)}%
-              </div>
-              <div className="w-full bg-secondary/20 rounded-full h-2">
-                <div 
-                  className="bg-gradient-success h-2 rounded-full transition-smooth" 
-                  style={{ width: `${habitCompletionRate}%` }}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Enhanced Schedule Manager */}
+        {/* Today's Schedule */}
         <ScheduleManager habits={userData.habits} />
-
-        {/* Habits Detailed Progress */}
-        <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="text-lg">習慣の進捗</CardTitle>
-            <CardDescription>今日の習慣達成状況</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3">
-              {habitProgress.map((progress, index) => (
-                <div
-                  key={index}
-                  className={`p-4 rounded-lg border transition-colors ${
-                    progress.completed
-                      ? 'bg-gradient-to-r from-success/10 to-success-soft/20 border-success/30'
-                      : 'bg-gradient-to-r from-secondary/10 to-secondary-accent/20 border-secondary/30'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      {progress.completed ? (
-                        <CheckCircle className="w-5 h-5 text-success" />
-                      ) : (
-                        <Target className="w-5 h-5 text-secondary-accent" />
-                      )}
-                      <div>
-                        <span className={`font-medium ${
-                          progress.completed 
-                            ? 'text-success-foreground' 
-                            : 'text-secondary-foreground'
-                        }`}>
-                          {progress.habitName}
-                        </span>
-                        {progress.scheduledTime && (
-                          <div className="text-xs text-muted-foreground">
-                            予定: {progress.scheduledTime}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <Badge 
-                      variant="outline" 
-                      className={`text-xs ${
-                        progress.completed
-                          ? 'bg-success text-success-foreground border-success'
-                          : 'border-secondary text-secondary-foreground'
-                      }`}
-                    >
-                      {progress.todayValue}/{progress.dailyGoal} {progress.unit}
-                    </Badge>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">進捗</span>
-                      <span className={progress.completed ? 'text-success font-medium' : 'text-foreground'}>
-                        {Math.round(progress.progressPercentage)}%
-                      </span>
-                    </div>
-                    <Progress 
-                      value={progress.progressPercentage} 
-                      className="h-2"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Important Todos Today */}
         {todosToday.length > 0 && (
@@ -326,6 +237,70 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
+
+        {/* Weekly Progress */}
+        <Card className="shadow-medium border-0 bg-gradient-to-r from-success/10 to-success-soft/20 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="text-lg">週間の進捗</CardTitle>
+            <CardDescription>今週の習慣達成状況</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center space-y-2">
+              <div className="text-3xl font-bold text-success">
+                {completedHabits}/{totalHabits}
+              </div>
+              <div className="text-sm text-success-foreground">
+                今日の習慣達成率 {Math.round(habitCompletionRate)}%
+              </div>
+              <div className="w-full bg-secondary/20 rounded-full h-2">
+                <div 
+                  className="bg-gradient-success h-2 rounded-full transition-smooth" 
+                  style={{ width: `${habitCompletionRate}%` }}
+                />
+              </div>
+            </div>
+            
+            <div className="mt-4 grid gap-3">
+              {habitProgress.map((progress, index) => (
+                <div
+                  key={index}
+                  className={`p-3 rounded-lg border transition-colors ${
+                    progress.completed
+                      ? 'bg-gradient-to-r from-success/10 to-success-soft/20 border-success/30'
+                      : 'bg-gradient-to-r from-secondary/10 to-secondary-accent/20 border-secondary/30'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {progress.completed ? (
+                        <CheckCircle className="w-4 h-4 text-success" />
+                      ) : (
+                        <Target className="w-4 h-4 text-secondary-accent" />
+                      )}
+                      <span className={`font-medium text-sm ${
+                        progress.completed 
+                          ? 'text-success-foreground' 
+                          : 'text-secondary-foreground'
+                      }`}>
+                        {progress.habitName}
+                      </span>
+                    </div>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${
+                        progress.completed
+                          ? 'bg-success text-success-foreground border-success'
+                          : 'border-secondary text-secondary-foreground'
+                      }`}
+                    >
+                      {progress.todayValue}/{progress.dailyGoal} {progress.unit}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Today's Summary */}
         <Card className="shadow-medium border-0 bg-gradient-to-r from-primary/10 to-primary-glow/20 backdrop-blur">

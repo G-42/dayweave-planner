@@ -108,48 +108,6 @@ export default function Todos() {
         {/* Goal Manager */}
         <GoalManager />
 
-        {/* Simple Task Addition for Today */}
-        <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="text-lg">今日のタスクを直接追加</CardTitle>
-            <CardDescription>目標に関係ない単発のタスクはこちら</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4">
-              <Input
-                value={newTodo}
-                onChange={(e) => setNewTodo(e.target.value)}
-                placeholder="今日やることを入力してください"
-                onKeyPress={(e) => e.key === 'Enter' && addTodo()}
-              />
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Select value={newCategory} onValueChange={setNewCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="カテゴリ選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(category => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Button 
-                  onClick={addTodo}
-                  disabled={!newTodo.trim()}
-                  className="bg-gradient-to-r from-primary to-primary-glow"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  タスクを追加
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Today's Simple Tasks */}
         {todos.length > 0 && (
           <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
@@ -203,6 +161,48 @@ export default function Todos() {
             </CardContent>
           </Card>
         )}
+
+        {/* Simple Task Addition for Today */}
+        <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="text-lg">今日のタスクを追加</CardTitle>
+            <CardDescription>目標に関係ない単発のタスクはこちら</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4">
+              <Input
+                value={newTodo}
+                onChange={(e) => setNewTodo(e.target.value)}
+                placeholder="今日やることを入力してください"
+                onKeyPress={(e) => e.key === 'Enter' && addTodo()}
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Select value={newCategory} onValueChange={setNewCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="カテゴリ選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(category => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button 
+                  onClick={addTodo}
+                  disabled={!newTodo.trim()}
+                  className="bg-gradient-to-r from-primary to-primary-glow"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  タスクを追加
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

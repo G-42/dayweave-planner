@@ -133,28 +133,87 @@ export const ScheduleItemEditor = ({ item, isOpen, onClose, onSave, habits }: Sc
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="startTime">開始時刻</Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="startTime"
-                  type="time"
-                  value={formData.startTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                  className="pl-10"
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <Select 
+                  value={formData.startTime.split(':')[0] || ''} 
+                  onValueChange={(hour) => {
+                    const minutes = formData.startTime.split(':')[1] || '00';
+                    setFormData(prev => ({ ...prev, startTime: `${hour.padStart(2, '0')}:${minutes}` }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="時" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover/95 backdrop-blur border-border max-h-[200px] overflow-y-auto">
+                    {Array.from({ length: 24 }, (_, i) => (
+                      <SelectItem key={i} value={i.toString()}>
+                        {i}時
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select 
+                  value={formData.startTime.split(':')[1] || ''} 
+                  onValueChange={(minutes) => {
+                    const hour = formData.startTime.split(':')[0] || '00';
+                    setFormData(prev => ({ ...prev, startTime: `${hour.padStart(2, '0')}:${minutes}` }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="分" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover/95 backdrop-blur border-border max-h-[200px] overflow-y-auto">
+                    {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => (
+                      <SelectItem key={minute} value={minute.toString().padStart(2, '0')}>
+                        {minute}分
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="endTime">終了時刻</Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="endTime"
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                  className="pl-10"
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <Select 
+                  value={formData.endTime.split(':')[0] || ''} 
+                  onValueChange={(hour) => {
+                    const minutes = formData.endTime.split(':')[1] || '00';
+                    setFormData(prev => ({ ...prev, endTime: `${hour.padStart(2, '0')}:${minutes}` }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="時" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover/95 backdrop-blur border-border max-h-[200px] overflow-y-auto">
+                    {Array.from({ length: 24 }, (_, i) => (
+                      <SelectItem key={i} value={i.toString()}>
+                        {i}時
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select 
+                  value={formData.endTime.split(':')[1] || ''} 
+                  onValueChange={(minutes) => {
+                    const hour = formData.endTime.split(':')[0] || '00';
+                    setFormData(prev => ({ ...prev, endTime: `${hour.padStart(2, '0')}:${minutes}` }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="分" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover/95 backdrop-blur border-border max-h-[200px] overflow-y-auto">
+                    {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => (
+                      <SelectItem key={minute} value={minute.toString().padStart(2, '0')}>
+                        {minute}分
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -241,7 +300,13 @@ export const ScheduleItemEditor = ({ item, isOpen, onClose, onSave, habits }: Sc
                 <Label>習慣を選択</Label>
                 <Select
                   value={formData.habitName}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, habitName: value }))}
+                  onValueChange={(value) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      habitName: value,
+                      title: value // 習慣名を自動でタイトルに設定
+                    }));
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="習慣を選択してください" />
