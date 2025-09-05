@@ -37,6 +37,7 @@ export default function Todos() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState('');
   const [newCategory, setNewCategory] = useState('');
+  const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
   const [scheduleTime, setScheduleTime] = useState({ startTime: '', endTime: '' });
@@ -62,13 +63,14 @@ export default function Todos() {
         id: Date.now().toString(),
         title: newTodo.trim(),
         completed: false,
-        priority: 'medium',
+        priority: newPriority,
         category: newCategory || 'その他',
         createdAt: new Date().toISOString(),
         inSchedule: false,
       };
       setTodos([...todos, todo]);
       setNewTodo('');
+      setNewPriority('medium');
     }
   };
 
@@ -189,6 +191,18 @@ export default function Todos() {
                         <Badge variant="outline" className="text-xs">
                           {todo.category}
                         </Badge>
+                        <Badge 
+                          variant="outline" 
+                          className={`text-xs ${
+                            todo.priority === 'high' 
+                              ? 'text-destructive border-destructive bg-destructive/10'
+                              : todo.priority === 'medium'
+                              ? 'text-warning border-warning bg-warning/10'
+                              : 'text-success border-success bg-success/10'
+                          }`}
+                        >
+                          {todo.priority === 'high' ? '高' : todo.priority === 'medium' ? '中' : '低'}優先度
+                        </Badge>
                       </div>
                     </div>
                     
@@ -233,7 +247,7 @@ export default function Todos() {
                 onKeyPress={(e) => e.key === 'Enter' && addTodo()}
               />
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Select value={newCategory} onValueChange={setNewCategory}>
                   <SelectTrigger>
                     <SelectValue placeholder="カテゴリ選択" />
@@ -244,6 +258,17 @@ export default function Todos() {
                         {category}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={newPriority} onValueChange={(value: 'low' | 'medium' | 'high') => setNewPriority(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="優先度選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">低優先度</SelectItem>
+                    <SelectItem value="medium">中優先度</SelectItem>
+                    <SelectItem value="high">高優先度</SelectItem>
                   </SelectContent>
                 </Select>
 
