@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Clock } from 'lucide-react';
 
 interface Todo {
   id: string;
@@ -35,6 +37,9 @@ export default function Todos() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState('');
   const [newCategory, setNewCategory] = useState('');
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
+  const [scheduleTime, setScheduleTime] = useState({ startTime: '', endTime: '' });
 
   // Load todos from localStorage
   useEffect(() => {
@@ -81,6 +86,24 @@ export default function Todos() {
 
   const deleteTodo = (id: string) => {
     setTodos(todos.filter(todo => todo.id !== id));
+  };
+
+  const openScheduleDialog = (todo: Todo) => {
+    setSelectedTodo(todo);
+    setIsScheduleDialogOpen(true);
+  };
+
+  const addToSchedule = () => {
+    if (selectedTodo && scheduleTime.startTime && scheduleTime.endTime) {
+      // Here you would add logic to add the todo to today's schedule
+      // This would integrate with your ScheduleManager component
+      console.log('Adding to schedule:', selectedTodo, scheduleTime);
+      
+      // Close dialog and reset
+      setIsScheduleDialogOpen(false);
+      setSelectedTodo(null);
+      setScheduleTime({ startTime: '', endTime: '' });
+    }
   };
 
   const filteredTodos = todos;
@@ -147,14 +170,25 @@ export default function Todos() {
                       </div>
                     </div>
                     
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deleteTodo(todo.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openScheduleDialog(todo)}
+                        className="text-primary border-primary hover:bg-primary-soft text-xs"
+                      >
+                        スケジュールに追加
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteTodo(todo.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -204,6 +238,112 @@ export default function Todos() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Schedule Dialog */}
+      <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>スケジュールに追加</DialogTitle>
+            <DialogDescription>
+              「{selectedTodo?.title}」の実行時間を設定してください
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>開始時刻</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={scheduleTime.startTime.split(':')[0] || ''}
+                    onValueChange={(hour) => {
+                      const minute = scheduleTime.startTime.split(':')[1] || '00';
+                      setScheduleTime(prev => ({ ...prev, startTime: `${hour.padStart(2, '0')}:${minute}` }));
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="時" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: 24}, (_, i) => (
+                        <SelectItem key={i} value={i.toString()}>{i}時</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={scheduleTime.startTime.split(':')[1] || ''}
+                    onValueChange={(minute) => {
+                      const hour = scheduleTime.startTime.split(':')[0] || '00';
+                      setScheduleTime(prev => ({ ...prev, startTime: `${hour.padStart(2, '0')}:${minute}` }));
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="分" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: 12}, (_, i) => (
+                        <SelectItem key={i} value={(i * 5).toString().padStart(2, '0')}>{i * 5}分</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>終了時刻</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={scheduleTime.endTime.split(':')[0] || ''}
+                    onValueChange={(hour) => {
+                      const minute = scheduleTime.endTime.split(':')[1] || '00';
+                      setScheduleTime(prev => ({ ...prev, endTime: `${hour.padStart(2, '0')}:${minute}` }));
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="時" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: 24}, (_, i) => (
+                        <SelectItem key={i} value={i.toString()}>{i}時</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={scheduleTime.endTime.split(':')[1] || ''}
+                    onValueChange={(minute) => {
+                      const hour = scheduleTime.endTime.split(':')[0] || '00';
+                      setScheduleTime(prev => ({ ...prev, endTime: `${hour.padStart(2, '0')}:${minute}` }));
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="分" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: 12}, (_, i) => (
+                        <SelectItem key={i} value={(i * 5).toString().padStart(2, '0')}>{i * 5}分</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsScheduleDialogOpen(false)}>
+                キャンセル
+              </Button>
+              <Button 
+                onClick={addToSchedule}
+                disabled={!scheduleTime.startTime || !scheduleTime.endTime}
+                className="bg-gradient-to-r from-primary to-primary-glow"
+              >
+                <Clock className="w-4 h-4 mr-2" />
+                スケジュールに追加
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

@@ -172,21 +172,77 @@ export const ScheduleTemplateCreator = ({ habits, onComplete, onBack }: Schedule
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="startTime">開始時刻</Label>
-                <Input
-                  id="startTime"
-                  type="time"
-                  value={newItem.startTime}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, startTime: e.target.value }))}
-                />
+                <div className="flex gap-2">
+                  <Select
+                    value={newItem.startTime.split(':')[0] || ''}
+                    onValueChange={(hour) => {
+                      const minute = newItem.startTime.split(':')[1] || '00';
+                      setNewItem(prev => ({ ...prev, startTime: `${hour.padStart(2, '0')}:${minute}` }));
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="時" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: 24}, (_, i) => (
+                        <SelectItem key={i} value={i.toString()}>{i}時</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={newItem.startTime.split(':')[1] || ''}
+                    onValueChange={(minute) => {
+                      const hour = newItem.startTime.split(':')[0] || '00';
+                      setNewItem(prev => ({ ...prev, startTime: `${hour.padStart(2, '0')}:${minute}` }));
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="分" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: 12}, (_, i) => (
+                        <SelectItem key={i} value={(i * 5).toString().padStart(2, '0')}>{i * 5}分</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="endTime">終了時刻</Label>
-                <Input
-                  id="endTime"
-                  type="time"
-                  value={newItem.endTime}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, endTime: e.target.value }))}
-                />
+                <div className="flex gap-2">
+                  <Select
+                    value={newItem.endTime.split(':')[0] || ''}
+                    onValueChange={(hour) => {
+                      const minute = newItem.endTime.split(':')[1] || '00';
+                      setNewItem(prev => ({ ...prev, endTime: `${hour.padStart(2, '0')}:${minute}` }));
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="時" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: 24}, (_, i) => (
+                        <SelectItem key={i} value={i.toString()}>{i}時</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={newItem.endTime.split(':')[1] || ''}
+                    onValueChange={(minute) => {
+                      const hour = newItem.endTime.split(':')[0] || '00';
+                      setNewItem(prev => ({ ...prev, endTime: `${hour.padStart(2, '0')}:${minute}` }));
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="分" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({length: 12}, (_, i) => (
+                        <SelectItem key={i} value={(i * 5).toString().padStart(2, '0')}>{i * 5}分</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
             <div className="space-y-2">

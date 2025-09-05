@@ -152,91 +152,52 @@ export default function Dashboard() {
         {/* Today's Schedule */}
         <ScheduleManager habits={userData.habits} />
 
-        {/* Important Todos Today */}
+        {/* Today's Simple Tasks */}
         {todosToday.length > 0 && (
           <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-lg">重要なタスク</CardTitle>
+              <CardTitle className="text-lg">今日のタスク</CardTitle>
               <CardDescription>
-                優先度が高い、または期限が迫っているタスク
+                目標とは別の今日やることリスト
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {todosToday.map((todo) => {
-                  const isOverdue = todo.dueDate && new Date(todo.dueDate) < new Date();
-                  const isDueToday = todo.dueDate && new Date(todo.dueDate).toDateString() === new Date().toDateString();
-                  
-                  return (
-                    <div
-                      key={todo.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                        isOverdue
-                          ? 'bg-destructive/10 border-destructive/30'
-                          : isDueToday
-                          ? 'bg-warning/10 border-warning/30'
-                          : 'bg-background border-border'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Circle className="w-4 h-4 text-muted-foreground" />
+                {todosToday.map((todo) => (
+                  <div
+                    key={todo.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                      todo.completed
+                        ? 'bg-success-soft/20 border-success/30'
+                        : 'bg-background border-border'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Circle className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    
+                    <div className="flex-1">
+                      <div className={`font-medium ${
+                        todo.completed 
+                          ? 'line-through opacity-60' 
+                          : 'text-foreground'
+                      }`}>
+                        {todo.title}
                       </div>
-                      
-                      <div className="flex-1">
-                        <div className="font-medium text-foreground">
-                          {todo.title}
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge 
-                            variant="outline" 
-                            className={`text-xs ${
-                              todo.priority === 'high' 
-                                ? 'text-destructive border-destructive bg-destructive/10'
-                                : todo.priority === 'medium'
-                                ? 'text-warning border-warning bg-warning/10'
-                                : 'text-success border-success bg-success/10'
-                            }`}
-                          >
-                            {todo.priority === 'high' ? '高' : todo.priority === 'medium' ? '中' : '低'}優先度
-                          </Badge>
-                          
-                          <Badge variant="outline" className="text-xs">
-                            {todo.category}
-                          </Badge>
-                          
-                          {todo.dueDate && (
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs ${
-                                isOverdue 
-                                  ? 'text-destructive border-destructive bg-destructive/10' 
-                                  : isDueToday
-                                  ? 'text-warning border-warning bg-warning/10'
-                                  : 'text-primary border-primary bg-primary/10'
-                              }`}
-                            >
-                              {isOverdue ? '期限切れ' : isDueToday ? '今日期限' : '期限: ' + new Date(todo.dueDate).toLocaleDateString('ja-JP')}
-                            </Badge>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          {todo.category}
+                        </Badge>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-              
-              <div className="mt-4 text-center">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="text-primary border-primary hover:bg-primary-soft"
-                >
-                  すべてのタスクを表示
-                </Button>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
         )}
+
+        {/* Important Todos Today */}
 
         {/* Weekly Progress */}
         <Card className="shadow-medium border-0 bg-gradient-to-r from-success/10 to-success-soft/20 backdrop-blur">
