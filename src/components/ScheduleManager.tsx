@@ -617,11 +617,14 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                   {/* Schedule Items with Timeline Design */}
                   {todayItems.length > 0 ? (
                     <div className="relative">
-                      {/* Main timeline line */}
-                      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-primary/20" />
+                      {/* Main timeline line - more prominent */}
+                      <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-primary/70 to-primary/30 shadow-sm" />
                       
                       {todayItems.map((item, index) => (
-                        <div key={item.id} className="relative mb-6 last:mb-0">
+                        <div key={item.id} className="relative mb-8 last:mb-0">
+                          {/* Connecting line from main timeline to bubble */}
+                          <div className="absolute left-8.5 top-4 w-3 h-0.5 bg-gradient-to-r from-primary/70 to-primary/30" />
+                          
                           {/* Timeline bubble with icon */}
                           <div className="absolute left-4 w-8 h-8 bg-gradient-to-br from-primary to-primary-glow rounded-full border-4 border-background shadow-lg flex items-center justify-center z-10">
                             {item.isHabit ? (
@@ -635,10 +638,18 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                             )}
                           </div>
                           
+                          {/* Connecting line from bubble to content */}
+                          <div className="absolute left-12 top-4 w-3 h-0.5 bg-gradient-to-r from-primary/30 to-transparent" />
+                          
                           {/* Time label */}
-                          <div className="absolute left-0 top-10 text-xs text-muted-foreground font-mono w-12 text-center">
+                          <div className="absolute left-0 top-10 text-xs text-muted-foreground font-mono w-12 text-center bg-background/80 backdrop-blur rounded px-1">
                             {item.startTime}
                           </div>
+                          
+                          {/* Connection indicator between items */}
+                          {index < todayItems.length - 1 && (
+                            <div className="absolute left-7.5 top-12 w-2 h-2 bg-primary/20 rotate-45 transform translate-x-0.5" />
+                          )}
                           
                           {/* Content card */}
                           <div className="ml-16 max-w-sm">
