@@ -620,46 +620,66 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                       {/* Main timeline line - more prominent */}
                       <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-primary/70 to-primary/30 shadow-sm" />
                       
-                      {todayItems.map((item, index) => (
-                        <div key={item.id} className="relative mb-8 last:mb-0">
-                          {/* Connecting line from main timeline to bubble */}
-                          <div className="absolute left-8.5 top-4 w-3 h-0.5 bg-gradient-to-r from-primary/70 to-primary/30" />
-                          
-                          {/* Timeline bubble with icon */}
-                          <div className="absolute left-4 w-8 h-8 bg-gradient-to-br from-primary to-primary-glow rounded-full border-4 border-background shadow-lg flex items-center justify-center z-10">
-                            {item.isHabit ? (
-                              <Target className="w-4 h-4 text-white" />
-                            ) : item.title.includes('睡眠') || item.title.includes('起床') ? (
-                              <Moon className="w-4 h-4 text-white" />
-                            ) : item.title.includes('食') ? (
-                              <Circle className="w-3 h-3 text-white fill-current" />
-                            ) : (
-                              <Clock className="w-4 h-4 text-white" />
+                      {todayItems.map((item, index) => {
+                        // Check if this item is in the past
+                        const now = new Date();
+                        const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                        const isPastTime = item.startTime < currentTime;
+                        
+                        return (
+                          <div key={item.id} className="relative mb-8 last:mb-0">
+                            {/* Connecting line from main timeline to bubble */}
+                            <div className={`absolute left-8.5 top-4 w-3 h-0.5 bg-gradient-to-r ${
+                              isPastTime ? 'from-muted-foreground/50 to-muted-foreground/20' : 'from-primary/70 to-primary/30'
+                            }`} />
+                            
+                            {/* Timeline bubble with icon */}
+                            <div className={`absolute left-4 w-8 h-8 rounded-full border-4 border-background shadow-lg flex items-center justify-center z-10 ${
+                              isPastTime 
+                                ? 'bg-gradient-to-br from-muted-foreground/60 to-muted-foreground/40' 
+                                : 'bg-gradient-to-br from-primary to-primary-glow'
+                            }`}>
+                              {item.isHabit ? (
+                                <Target className="w-4 h-4 text-white" />
+                              ) : item.title.includes('睡眠') || item.title.includes('起床') ? (
+                                <Moon className="w-4 h-4 text-white" />
+                              ) : item.title.includes('食') ? (
+                                <Circle className="w-3 h-3 text-white fill-current" />
+                              ) : (
+                                <Clock className="w-4 h-4 text-white" />
+                              )}
+                            </div>
+                            
+                            {/* Connecting line from bubble to content */}
+                            <div className={`absolute left-12 top-4 w-3 h-0.5 bg-gradient-to-r ${
+                              isPastTime ? 'from-muted-foreground/20 to-transparent' : 'from-primary/30 to-transparent'
+                            }`} />
+                            
+                            {/* Time label */}
+                            <div className={`absolute left-0 top-10 text-xs font-mono w-12 text-center bg-background/80 backdrop-blur rounded px-1 ${
+                              isPastTime ? 'text-muted-foreground/70' : 'text-muted-foreground'
+                            }`}>
+                              {item.startTime}
+                            </div>
+                            
+                            {/* Connection indicator between items */}
+                            {index < todayItems.length - 1 && (
+                              <div className={`absolute left-7.5 top-12 w-2 h-2 rotate-45 transform translate-x-0.5 ${
+                                isPastTime ? 'bg-muted-foreground/20' : 'bg-primary/20'
+                              }`} />
                             )}
-                          </div>
-                          
-                          {/* Connecting line from bubble to content */}
-                          <div className="absolute left-12 top-4 w-3 h-0.5 bg-gradient-to-r from-primary/30 to-transparent" />
-                          
-                          {/* Time label */}
-                          <div className="absolute left-0 top-10 text-xs text-muted-foreground font-mono w-12 text-center bg-background/80 backdrop-blur rounded px-1">
-                            {item.startTime}
-                          </div>
-                          
-                          {/* Connection indicator between items */}
-                          {index < todayItems.length - 1 && (
-                            <div className="absolute left-7.5 top-12 w-2 h-2 bg-primary/20 rotate-45 transform translate-x-0.5" />
-                          )}
-                          
-                          {/* Content card */}
-                          <div className="ml-16 max-w-sm">
-                            <div
-                              className={`p-4 rounded-2xl border transition-all duration-300 shadow-sm ${
-                                item.completed
-                                  ? 'bg-gradient-to-br from-success/10 to-success-soft/20 border-success/30 opacity-80'
-                                  : 'bg-gradient-to-br from-background to-accent/5 border-border hover:border-primary/30 hover:shadow-md'
-                              }`}
-                            >
+                            
+                            {/* Content card */}
+                            <div className="ml-16 max-w-sm">
+                              <div
+                                className={`p-4 rounded-2xl border transition-all duration-300 shadow-sm ${
+                                  item.completed
+                                    ? 'bg-gradient-to-br from-success/10 to-success-soft/20 border-success/30 opacity-80'
+                                    : isPastTime
+                                    ? 'bg-gradient-to-br from-background to-muted/10 border-border/50 opacity-75'
+                                    : 'bg-gradient-to-br from-background to-accent/5 border-border hover:border-primary/30 hover:shadow-md'
+                                }`}
+                              >
                               <div className="flex items-start gap-3">
                                 <button
                                   onClick={() => handleToggleComplete(item.id)}
@@ -692,7 +712,11 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                                   </div>
                                   
                                   <div className={`font-medium text-sm leading-snug ${
-                                    item.completed ? 'line-through text-muted-foreground' : 'text-foreground'
+                                    item.completed 
+                                      ? 'line-through text-muted-foreground' 
+                                      : isPastTime 
+                                      ? 'text-foreground/80' 
+                                      : 'text-foreground'
                                   }`}>
                                     {item.title}
                                   </div>
@@ -747,8 +771,9 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                         </div>
+                        );
+                       })}
                     </div>
                   ) : (
                     <div className="text-center py-12 text-muted-foreground">
