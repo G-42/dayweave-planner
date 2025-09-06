@@ -79,23 +79,44 @@ export type Database = {
       }
       habits: {
         Row: {
+          consecutive_days: number | null
           created_at: string
+          daily_goal: number | null
+          history: Json | null
           id: string
+          last_updated_date: string | null
           name: string
+          today_value: number | null
+          total_value: number | null
+          unit: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          consecutive_days?: number | null
           created_at?: string
+          daily_goal?: number | null
+          history?: Json | null
           id?: string
+          last_updated_date?: string | null
           name: string
+          today_value?: number | null
+          total_value?: number | null
+          unit?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          consecutive_days?: number | null
           created_at?: string
+          daily_goal?: number | null
+          history?: Json | null
           id?: string
+          last_updated_date?: string | null
           name?: string
+          today_value?: number | null
+          total_value?: number | null
+          unit?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -163,7 +184,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reset_daily_habits: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

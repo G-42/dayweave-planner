@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Play, Pause, RotateCcw, TrendingUp, Calendar, Target, Flame, CheckCircle, Plus, Settings, Save, X } from 'lucide-react';
+import { useAuth } from '@/components/AuthProvider';
+import { supabase } from '@/integrations/supabase/client';
 
 interface HabitData {
   name: string;
@@ -37,6 +39,7 @@ interface GoalInput {
 }
 
 export default function Habits() {
+  const { user, loading } = useAuth();
   const [habits, setHabits] = useState<HabitData[]>([]);
   const [manualInputs, setManualInputs] = useState<ManualInput>({});
   const [unitInputs, setUnitInputs] = useState<UnitInput>({});
@@ -48,42 +51,44 @@ export default function Habits() {
     activeHabit: null,
   });
 
-  // Load habits data from localStorage
-  useEffect(() => {
-    const userData = localStorage.getItem('dayweave-user');
-    const habitsData = localStorage.getItem('dayweave-habits');
-    
-    if (userData) {
-      const { habits: habitNames } = JSON.parse(userData);
-      
-      if (habitsData) {
-        // Load existing habit data
-        const savedHabits = JSON.parse(habitsData);
-        setHabits(savedHabits);
-      } else {
-        // Initialize new habit data
-        const today = new Date().toISOString().split('T')[0];
-        const initialHabits = habitNames.map((name: string) => ({
-          name,
-          totalValue: 0,
-          unit: name.includes('読書') ? 'ページ' : 'minutes',
-          consecutiveDays: 0,
-          lastUpdated: '',
-          todayValue: 0,
-          dailyGoal: name.includes('読書') ? 30 : 30, // 30 pages or 30 minutes
-          history: { [today]: 0 },
-        }));
-        setHabits(initialHabits);
-      }
-    }
-  }, []);
+  // Load habits data from Supabase
+  const loadHabits = async () => {
+    if (!user) return;
 
-  // Save habits data to localStorage whenever it changes
-  useEffect(() => {
-    if (habits.length > 0) {
-      localStorage.setItem('dayweave-habits', JSON.stringify(habits));
+    try {
+      const { data, error } = await supabase
+        .from('habits')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at');
+
+      if (error) {
+        console.error('Error loading habits:', error);
+        return;
+      }
+
+      const habitsData = data.map(habit => ({
+        name: habit.name,
+        totalValue: habit.total_value || 0,
+        unit: habit.unit || 'minutes',
+        consecutiveDays: habit.consecutive_days || 0,
+        lastUpdated: habit.updated_at,
+        todayValue: habit.today_value || 0,
+        dailyGoal: habit.daily_goal || 30,
+        history: (habit.history as { [date: string]: number }) || {},
+      }));
+
+      setHabits(habitsData);
+    } catch (error) {
+      console.error('Failed to load habits:', error);
     }
-  }, [habits]);
+  };
+
+  useEffect(() => {
+    if (!loading && user) {
+      loadHabits();
+    }
+  }, [user, loading]);
 
   // Update daily data when date changes
   useEffect(() => {
@@ -132,26 +137,58 @@ export default function Habits() {
 
   const getTodayString = () => new Date().toISOString().split('T')[0];
 
-  const updateHabitValue = (habitName: string, value: number, isTimer = false) => {
+  const updateHabitValue = async (habitName: string, value: number, isTimer = false) => {
+    if (!user) return;
+
     const today = getTodayString();
     
-    setHabits(prev => prev.map(habit => {
-      if (habit.name === habitName) {
+    try {
+      // Update local state
+      setHabits(prev => prev.map(habit => {
+        if (habit.name === habitName) {
+          const newTodayValue = habit.todayValue + value;
+          const newTotalValue = habit.totalValue + value;
+          const isFirstTimeToday = habit.todayValue === 0 && newTodayValue > 0;
+          
+          return {
+            ...habit,
+            totalValue: newTotalValue,
+            todayValue: newTodayValue,
+            lastUpdated: new Date().toISOString(),
+            consecutiveDays: isFirstTimeToday ? habit.consecutiveDays + 1 : habit.consecutiveDays,
+            history: { ...habit.history, [today]: newTodayValue },
+          };
+        }
+        return habit;
+      }));
+
+      // Update in Supabase
+      const habit = habits.find(h => h.name === habitName);
+      if (habit) {
         const newTodayValue = habit.todayValue + value;
         const newTotalValue = habit.totalValue + value;
         const isFirstTimeToday = habit.todayValue === 0 && newTodayValue > 0;
-        
-        return {
-          ...habit,
-          totalValue: newTotalValue,
-          todayValue: newTodayValue,
-          lastUpdated: new Date().toISOString(),
-          consecutiveDays: isFirstTimeToday ? habit.consecutiveDays + 1 : habit.consecutiveDays,
-          history: { ...habit.history, [today]: newTodayValue },
-        };
+        const newHistory = { ...habit.history, [today]: newTodayValue };
+
+        const { error } = await supabase
+          .from('habits')
+          .update({
+            total_value: newTotalValue,
+            today_value: newTodayValue,
+            consecutive_days: isFirstTimeToday ? habit.consecutiveDays + 1 : habit.consecutiveDays,
+            history: newHistory,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', user.id)
+          .eq('name', habitName);
+
+        if (error) {
+          console.error('Error updating habit:', error);
+        }
       }
-      return habit;
-    }));
+    } catch (error) {
+      console.error('Failed to update habit:', error);
+    }
   };
 
   const startTimer = (habitName: string) => {
@@ -192,19 +229,42 @@ export default function Habits() {
     }
   };
 
-  const updateHabitSettings = (habitName: string) => {
+  const updateHabitSettings = async (habitName: string) => {
+    if (!user) return;
+
     const newUnit = unitInputs[habitName];
     const newGoal = parseFloat(goalInputs[habitName] || '0');
     
     if (newUnit && newGoal > 0) {
-      setHabits(prev => prev.map(habit =>
-        habit.name === habitName
-          ? { ...habit, unit: newUnit, dailyGoal: newGoal }
-          : habit
-      ));
-      setEditingHabit(null);
-      setUnitInputs(prev => ({ ...prev, [habitName]: '' }));
-      setGoalInputs(prev => ({ ...prev, [habitName]: '' }));
+      try {
+        // Update local state
+        setHabits(prev => prev.map(habit =>
+          habit.name === habitName
+            ? { ...habit, unit: newUnit, dailyGoal: newGoal }
+            : habit
+        ));
+
+        // Update in Supabase
+        const { error } = await supabase
+          .from('habits')
+          .update({
+            unit: newUnit,
+            daily_goal: newGoal,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', user.id)
+          .eq('name', habitName);
+
+        if (error) {
+          console.error('Error updating habit settings:', error);
+        }
+
+        setEditingHabit(null);
+        setUnitInputs(prev => ({ ...prev, [habitName]: '' }));
+        setGoalInputs(prev => ({ ...prev, [habitName]: '' }));
+      } catch (error) {
+        console.error('Failed to update habit settings:', error);
+      }
     }
   };
 
@@ -231,6 +291,26 @@ export default function Habits() {
     if (days >= 3) return '✨';
     return '';
   };
+
+  // Show loading or auth required state
+  if (loading) {
+    return (
+      <Layout>
+        <div className="p-4 text-center">読み込み中...</div>
+      </Layout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Layout>
+        <div className="p-4 text-center space-y-4">
+          <h2 className="text-xl font-bold">ログインが必要です</h2>
+          <p className="text-muted-foreground">習慣トラッカーを使用するにはログインしてください。</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
