@@ -11,11 +11,20 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { supabase } from '@/integrations/supabase/client';
 import { ScheduleManager } from '@/components/ScheduleManager';
 import { ScheduleTemplateCreator } from '@/components/ScheduleTemplateCreator';
+import { InitialSetup } from '@/components/InitialSetup';
 import { GoalManager } from '@/components/GoalManager';
 import { 
   Calendar, Plus, CheckCircle, Circle, Target, TrendingUp, Crown, Settings, Clock, Users, BookOpen 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+// Habit interface for initial setup
+interface Habit {
+  id: string;
+  name: string;
+  dailyGoal: number;
+  unit: string;
+}
 
 // Template interfaces to match ScheduleTemplateCreator
 interface TemplateScheduleItem {
@@ -162,20 +171,10 @@ export default function Dashboard() {
     return isSubscribed; // Analytics only for premium users
   };
 
-  const handleSetupComplete = (templates: TemplateData[]) => {
-    // Extract habits from templates
-    const allHabits = new Set<string>();
-    templates.forEach(template => {
-      template.items.forEach(item => {
-        if (item.isHabit && item.habitName) {
-          allHabits.add(item.habitName);
-        }
-      });
-    });
-    
+  const handleSetupComplete = (habits: Habit[]) => {
     const setupData = {
-      habits: Array.from(allHabits),
-      templates: templates
+      habits: habits.map(h => ({ name: h.name, dailyGoal: h.dailyGoal, unit: h.unit })),
+      completedAt: new Date().toISOString()
     };
     
     // Save setup data to localStorage
@@ -188,7 +187,23 @@ export default function Dashboard() {
     
     toast({
       title: "初期設定が完了しました！",
-      description: "スケジュール管理を始めましょう",
+      description: `${habits.length}個の習慣が設定されました`,
+    });
+  };
+
+  const handleSetupSkip = () => {
+    const setupData = {
+      habits: [],
+      completedAt: new Date().toISOString()
+    };
+    
+    localStorage.setItem('dayweave-user', JSON.stringify(setupData));
+    setHasCompletedSetup(true);
+    setIsSetupDialogOpen(false);
+    
+    toast({
+      title: "初期設定をスキップしました",
+      description: "後でいつでも習慣を追加できます",
     });
   };
 
@@ -290,16 +305,7 @@ export default function Dashboard() {
           </Alert>
         )}
 
-        {/* Main Content - 初期設定状況に関係なく設定ボタンを表示 */}
-        <div className="mb-4 text-center">
-          <Button 
-            onClick={() => setIsSetupDialogOpen(true)}
-            className="bg-gradient-to-r from-primary to-primary-glow"
-          >
-            <BookOpen className="w-4 h-4 mr-2" />
-            {hasCompletedSetup ? '初期設定を再実行' : '初期設定を開始'}
-          </Button>
-        </div>
+        {/* Main Content */}
 
         {hasCompletedSetup ? (
           <Tabs defaultValue="schedule" className="space-y-6">
@@ -544,16 +550,9 @@ export default function Dashboard() {
         {/* Setup Dialog */}
         <Dialog open={isSetupDialogOpen} onOpenChange={setIsSetupDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
-            <DialogHeader>
-              <DialogTitle>初期設定</DialogTitle>
-              <DialogDescription>
-                習慣とスケジュールテンプレートを設定しましょう
-              </DialogDescription>
-            </DialogHeader>
-            <ScheduleTemplateCreator
-              habits={[]} // Start with no habits, user will define them
-              onComplete={handleSetupComplete}
-              onBack={() => setIsSetupDialogOpen(false)}
+            <InitialSetup
+              onSetupComplete={handleSetupComplete}
+              onSkip={handleSetupSkip}
             />
           </DialogContent>
         </Dialog>
