@@ -614,91 +614,169 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                     </div>
                   </div>
 
-                  {/* Schedule Items */}
+                  {/* Timeline Schedule Items */}
                   {todayItems.length > 0 ? (
-                    <div className="space-y-2">
-                      {todayItems.map((item) => (
-                        <div
-                          key={item.id}
-                          className={`flex items-center gap-3 p-4 rounded-lg border transition-colors ${
-                            item.completed
-                              ? 'bg-success-soft/20 border-success/30 opacity-75'
-                              : 'bg-background border-border hover:bg-accent/50'
-                          }`}
-                        >
-                          <button
-                            onClick={() => handleToggleComplete(item.id)}
-                            className="flex-shrink-0"
-                          >
-                            {item.completed ? (
-                              <CheckCircle className="w-5 h-5 text-success" />
-                            ) : (
-                              <Circle className="w-5 h-5 text-muted-foreground hover:text-primary" />
-                            )}
-                          </button>
-
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[120px]">
-                            <Clock className="w-4 h-4" />
-                            {item.startTime}〜{item.endTime}
-                          </div>
-
-                          <div className="flex-1">
-                            <div className={`font-medium ${
-                              item.completed ? 'line-through text-muted-foreground' : 'text-foreground'
-                            }`}>
-                              {item.title}
-                            </div>
-                            
-                            <div className="flex items-center gap-2 mt-1">
-                              {item.priority && item.priority !== 'none' && (
-                                <Badge variant="outline" className={`text-xs ${getPriorityColor(item.priority)}`}>
-                                  {item.priority === 'high' ? '高' : item.priority === 'medium' ? '中' : '低'}優先度
-                                </Badge>
-                              )}
-                              
-                              {item.category && (
-                                <Badge variant="outline" className="text-xs">
-                                  {item.category}
-                                </Badge>
-                              )}
-                              
-                              {item.isHabit && (
-                                <Badge variant="outline" className="text-xs bg-success-soft border-success text-success-foreground">
-                                  <Target className="w-3 h-3 mr-1" />
-                                  習慣: {item.habitName}
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            {item.notes && (
-                              <div className="text-xs text-muted-foreground mt-1 italic">
-                                {item.notes}
+                    <div className="relative pl-8">
+                      {/* Main Timeline Vertical Line */}
+                      <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/60 via-primary/40 to-primary/20"></div>
+                      
+                      <div className="space-y-6">
+                        {todayItems.map((item, index) => {
+                          const currentTime = new Date();
+                          const currentTimeString = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`;
+                          const itemStartTime = item.startTime;
+                          const isPast = itemStartTime < currentTimeString;
+                          
+                          return (
+                            <div key={item.id} className="relative">
+                              {/* Timeline Node */}
+                              <div className="absolute -left-7 top-6 flex items-center justify-center">
+                                <div className={`relative z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                                  item.completed
+                                    ? 'bg-success border-success shadow-lg shadow-success/20'
+                                    : isPast
+                                    ? 'bg-muted border-muted-foreground/30'
+                                    : 'bg-primary border-primary shadow-lg shadow-primary/20'
+                                }`}>
+                                  {item.completed ? (
+                                    <CheckCircle className="w-4 h-4 text-white" />
+                                  ) : item.isHabit ? (
+                                    <Target className="w-3 h-3 text-white" />
+                                  ) : (
+                                    <Clock className="w-3 h-3 text-white" />
+                                  )}
+                                </div>
+                                
+                                {/* Connection Line to Item */}
+                                <div className={`absolute left-6 top-3 w-4 h-0.5 transition-all ${
+                                  item.completed
+                                    ? 'bg-success/50'
+                                    : isPast
+                                    ? 'bg-muted-foreground/30'
+                                    : 'bg-primary/50'
+                                }`}></div>
                               </div>
-                            )}
-                          </div>
 
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border">
-                              <DropdownMenuItem onClick={() => handleEditItem(item)}>
-                                <Edit className="w-4 h-4 mr-2" />
-                                編集
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleDeleteItem(item.id)}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                削除
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      ))}
+                              {/* Schedule Item Card */}
+                              <div className={`ml-4 transition-all duration-300 ${
+                                item.completed
+                                  ? 'opacity-75'
+                                  : isPast
+                                  ? 'opacity-60'
+                                  : ''
+                              }`}>
+                                {/* Time Label */}
+                                <div className={`flex items-center gap-2 mb-2 text-sm font-medium ${
+                                  item.completed
+                                    ? 'text-success'
+                                    : isPast
+                                    ? 'text-muted-foreground'
+                                    : 'text-primary'
+                                }`}>
+                                  <span className="font-mono">{item.startTime}〜{item.endTime}</span>
+                                  <span className="text-xs opacity-60">
+                                    ({(() => {
+                                      const [startHour, startMin] = item.startTime.split(':').map(Number);
+                                      const [endHour, endMin] = item.endTime.split(':').map(Number);
+                                      const startMinutes = startHour * 60 + startMin;
+                                      const endMinutes = endHour * 60 + endMin;
+                                      const duration = endMinutes - startMinutes;
+                                      const hours = Math.floor(duration / 60);
+                                      const minutes = duration % 60;
+                                      return hours > 0 ? `${hours}時間${minutes > 0 ? minutes + '分' : ''}` : `${minutes}分`;
+                                    })()})
+                                  </span>
+                                </div>
+
+                                {/* Item Content */}
+                                <div className={`p-4 rounded-lg border transition-colors ${
+                                  item.completed
+                                    ? 'bg-success-soft/20 border-success/30'
+                                    : isPast
+                                    ? 'bg-muted/20 border-muted-foreground/20'
+                                    : 'bg-background border-border hover:bg-accent/50 hover:shadow-md'
+                                }`}>
+                                  <div className="flex items-start gap-3">
+                                    {/* Completion Toggle */}
+                                    <button
+                                      onClick={() => handleToggleComplete(item.id)}
+                                      className="flex-shrink-0 mt-1"
+                                    >
+                                      {item.completed ? (
+                                        <CheckCircle className="w-5 h-5 text-success" />
+                                      ) : (
+                                        <Circle className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors" />
+                                      )}
+                                    </button>
+
+                                    {/* Item Details */}
+                                    <div className="flex-1 min-w-0">
+                                      <div className={`font-medium text-base leading-snug ${
+                                        item.completed 
+                                          ? 'line-through text-muted-foreground' 
+                                          : isPast
+                                          ? 'text-muted-foreground'
+                                          : 'text-foreground'
+                                      }`}>
+                                        {item.title}
+                                      </div>
+                                      
+                                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                        {item.priority && item.priority !== 'none' && (
+                                          <Badge variant="outline" className={`text-xs ${getPriorityColor(item.priority)}`}>
+                                            {item.priority === 'high' ? '高' : item.priority === 'medium' ? '中' : '低'}優先度
+                                          </Badge>
+                                        )}
+                                        
+                                        {item.category && (
+                                          <Badge variant="outline" className="text-xs">
+                                            {item.category}
+                                          </Badge>
+                                        )}
+                                        
+                                        {item.isHabit && (
+                                          <Badge variant="outline" className="text-xs bg-success-soft border-success text-success-foreground">
+                                            <Target className="w-3 h-3 mr-1" />
+                                            習慣: {item.habitName}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      
+                                      {item.notes && (
+                                        <div className="text-xs text-muted-foreground mt-2 italic">
+                                          {item.notes}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Actions Menu */}
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-60 hover:opacity-100">
+                                          <MoreHorizontal className="w-4 h-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border">
+                                        <DropdownMenuItem onClick={() => handleEditItem(item)}>
+                                          <Edit className="w-4 h-4 mr-2" />
+                                          編集
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem 
+                                          onClick={() => handleDeleteItem(item.id)}
+                                          className="text-destructive focus:text-destructive"
+                                        >
+                                          <Trash2 className="w-4 h-4 mr-2" />
+                                          削除
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-12 text-muted-foreground">
