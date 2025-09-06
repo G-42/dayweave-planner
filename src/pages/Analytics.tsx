@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Layout } from '@/components/Layout';
+import { useAuth } from '@/components/AuthProvider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -48,6 +49,7 @@ interface HabitTrend {
 }
 
 export default function Analytics() {
+  const { isSubscribed } = useAuth();
   const [habits, setHabits] = useState<HabitData[]>([]);
   const [todos, setTodos] = useState<TodoData[]>([]);
   const [timeRange, setTimeRange] = useState<'7days' | '30days' | '90days'>('30days');
@@ -250,6 +252,31 @@ export default function Analytics() {
   const categoryStats = getCategoryStats();
   const priorityStats = getPriorityStats();
   const overallStats = getOverallStats();
+
+  // Show subscription required message for free users
+  if (!isSubscribed) {
+    return (
+      <Layout>
+        <div className="p-4 space-y-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent mb-4">
+              分析・統計
+            </h1>
+            <div className="max-w-md mx-auto bg-gradient-to-br from-primary/10 to-primary-soft/20 rounded-lg p-8 border shadow-medium">
+              <div className="text-4xl mb-4">📊</div>
+              <h2 className="text-xl font-semibold mb-2">詳細な分析機能</h2>
+              <p className="text-muted-foreground mb-6">
+                習慣の詳細な統計分析やトレンドグラフを表示するには、有料プランにアップグレードしてください。
+              </p>
+              <Badge className="bg-primary text-primary-foreground">
+                プレミアム機能
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
