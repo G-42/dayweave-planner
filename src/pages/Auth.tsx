@@ -90,10 +90,10 @@ export default function Auth() {
 
       toast({
         title: "アカウントを作成しました",
-        description: "確認メールをチェックしてアカウントを有効化してください",
+        description: "ウェルカムページへ移動します",
       });
       
-      navigate('/dashboard');
+      navigate('/welcome');
     } catch (err) {
       setError('アカウント作成に失敗しました');
     } finally {

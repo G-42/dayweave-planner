@@ -14,9 +14,10 @@ export default function Welcome() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) {
-      navigate('/dashboard');
-    }
+    // 新規登録後のユーザーもwelcomeページを表示できるように、自動リダイレクトを無効化
+    // if (!loading && user) {
+    //   navigate('/dashboard');
+    // }
   }, [user, loading, navigate]);
 
   const handleGetStarted = () => {
@@ -76,7 +77,7 @@ export default function Welcome() {
               あなた専用の成長プラットフォーム
             </p>
             
-            {!user && (
+            {!user ? (
               <Button 
                 onClick={handleGetStarted}
                 size="lg"
@@ -84,6 +85,19 @@ export default function Welcome() {
               >
                 今すぐ始める（無料）
               </Button>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-lg text-muted-foreground">
+                  アカウント作成完了！早速アプリを使い始めましょう。
+                </p>
+                <Button 
+                  onClick={() => navigate('/dashboard')}
+                  size="lg"
+                  className="bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary shadow-primary"
+                >
+                  ダッシュボードへ移動
+                </Button>
+              </div>
             )}
           </div>
 
