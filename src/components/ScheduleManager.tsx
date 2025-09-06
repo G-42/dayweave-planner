@@ -8,7 +8,7 @@ import { ScheduleItemEditor } from './ScheduleItemEditor';
 import { WeeklyView } from './WeeklyView';
 import { TemplateEditor } from './TemplateEditor';
 import { SavedItemsPanel } from './SavedItemsPanel';
-import { Plus, Clock, CheckCircle, Circle, Target, Calendar, Edit, Trash2, MoreHorizontal, Save, ChevronDown, Bookmark, Archive } from 'lucide-react';
+import { Plus, Clock, CheckCircle, Circle, Target, Calendar, Edit, Trash2, MoreHorizontal, Save, ChevronDown, Bookmark, Archive, Moon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -614,96 +614,127 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                     </div>
                   </div>
 
-                  {/* Schedule Items with Lines */}
+                  {/* Schedule Items with Timeline Design */}
                   {todayItems.length > 0 ? (
-                    <div className="relative space-y-4">
-                      {/* Vertical connecting line */}
-                      <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-gradient-to-b from-primary/30 to-primary/10 rounded-full" 
-                           style={{zIndex: 0}} />
+                    <div className="relative">
+                      {/* Main timeline line */}
+                      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-primary/20" />
                       
                       {todayItems.map((item, index) => (
-                        <div key={item.id} className="relative">
-                          {/* Connection dot */}
-                          <div className="absolute left-5 top-6 w-3 h-3 bg-primary rounded-full border-2 border-background shadow-sm z-10" />
+                        <div key={item.id} className="relative mb-6 last:mb-0">
+                          {/* Timeline bubble with icon */}
+                          <div className="absolute left-4 w-8 h-8 bg-gradient-to-br from-primary to-primary-glow rounded-full border-4 border-background shadow-lg flex items-center justify-center z-10">
+                            {item.isHabit ? (
+                              <Target className="w-4 h-4 text-white" />
+                            ) : item.title.includes('睡眠') || item.title.includes('起床') ? (
+                              <Moon className="w-4 h-4 text-white" />
+                            ) : item.title.includes('食') ? (
+                              <Circle className="w-3 h-3 text-white fill-current" />
+                            ) : (
+                              <Clock className="w-4 h-4 text-white" />
+                            )}
+                          </div>
                           
-                          <div
-                            className={`ml-12 flex items-center gap-3 p-4 rounded-lg border transition-colors ${
-                              item.completed
-                                ? 'bg-success-soft/20 border-success/30 opacity-75'
-                                : 'bg-background border-border hover:bg-accent/50'
-                            }`}
-                          >
-                            <button
-                              onClick={() => handleToggleComplete(item.id)}
-                              className="flex-shrink-0"
+                          {/* Time label */}
+                          <div className="absolute left-0 top-10 text-xs text-muted-foreground font-mono w-12 text-center">
+                            {item.startTime}
+                          </div>
+                          
+                          {/* Content card */}
+                          <div className="ml-16 max-w-sm">
+                            <div
+                              className={`p-4 rounded-2xl border transition-all duration-300 shadow-sm ${
+                                item.completed
+                                  ? 'bg-gradient-to-br from-success/10 to-success-soft/20 border-success/30 opacity-80'
+                                  : 'bg-gradient-to-br from-background to-accent/5 border-border hover:border-primary/30 hover:shadow-md'
+                              }`}
                             >
-                              {item.completed ? (
-                                <CheckCircle className="w-5 h-5 text-success" />
-                              ) : (
-                                <Circle className="w-5 h-5 text-muted-foreground hover:text-primary" />
-                              )}
-                            </button>
-
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[120px]">
-                              <Clock className="w-4 h-4" />
-                              {item.startTime}〜{item.endTime}
-                            </div>
-
-                            <div className="flex-1">
-                              <div className={`font-medium ${
-                                item.completed ? 'line-through text-muted-foreground' : 'text-foreground'
-                              }`}>
-                                {item.title}
-                              </div>
-                              
-                              <div className="flex items-center gap-2 mt-1">
-                                {item.priority && item.priority !== 'none' && (
-                                  <Badge variant="outline" className={`text-xs ${getPriorityColor(item.priority)}`}>
-                                    {item.priority === 'high' ? '高' : item.priority === 'medium' ? '中' : '低'}優先度
-                                  </Badge>
-                                )}
-                                
-                                {item.category && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {item.category}
-                                  </Badge>
-                                )}
-                                
-                                {item.isHabit && (
-                                  <Badge variant="outline" className="text-xs bg-success-soft border-success text-success-foreground">
-                                    <Target className="w-3 h-3 mr-1" />
-                                    習慣: {item.habitName}
-                                  </Badge>
-                                )}
-                              </div>
-                              
-                              {item.notes && (
-                                <div className="text-xs text-muted-foreground mt-1 italic">
-                                  {item.notes}
-                                </div>
-                              )}
-                            </div>
-
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border">
-                                <DropdownMenuItem onClick={() => handleEditItem(item)}>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  編集
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  onClick={() => handleDeleteItem(item.id)}
-                                  className="text-destructive focus:text-destructive"
+                              <div className="flex items-start gap-3">
+                                <button
+                                  onClick={() => handleToggleComplete(item.id)}
+                                  className="flex-shrink-0 mt-1"
                                 >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  削除
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                                  {item.completed ? (
+                                    <CheckCircle className="w-5 h-5 text-success" />
+                                  ) : (
+                                    <Circle className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors" />
+                                  )}
+                                </button>
+
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                                    {item.startTime !== item.endTime && (
+                                      <span className="font-mono">
+                                        {item.startTime}〜{item.endTime}
+                                      </span>
+                                    )}
+                                    {item.endTime !== item.startTime && item.endTime && item.startTime && (
+                                      <span className="text-primary">
+                                        ({(() => {
+                                          const start = new Date(`2024-01-01T${item.startTime}:00`);
+                                          const end = new Date(`2024-01-01T${item.endTime}:00`);
+                                          const diffMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+                                          return diffMinutes > 0 ? `${diffMinutes}分間` : '';
+                                        })()})
+                                      </span>
+                                    )}
+                                  </div>
+                                  
+                                  <div className={`font-medium text-sm leading-snug ${
+                                    item.completed ? 'line-through text-muted-foreground' : 'text-foreground'
+                                  }`}>
+                                    {item.title}
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                    {item.isHabit && (
+                                      <Badge variant="outline" className="text-xs bg-success-soft/20 border-success/40 text-success-foreground">
+                                        習慣: {item.habitName}
+                                      </Badge>
+                                    )}
+                                    
+                                    {item.priority && item.priority !== 'none' && (
+                                      <Badge variant="outline" className={`text-xs ${getPriorityColor(item.priority)}`}>
+                                        {item.priority === 'high' ? '高' : item.priority === 'medium' ? '中' : '低'}優先度
+                                      </Badge>
+                                    )}
+                                    
+                                    {item.category && (
+                                      <Badge variant="outline" className="text-xs">
+                                        {item.category}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  
+                                  {item.notes && (
+                                    <div className="text-xs text-muted-foreground mt-2 italic bg-muted/20 p-2 rounded">
+                                      {item.notes}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-50 hover:opacity-100">
+                                      <MoreHorizontal className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border">
+                                    <DropdownMenuItem onClick={() => handleEditItem(item)}>
+                                      <Edit className="w-4 h-4 mr-2" />
+                                      編集
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleDeleteItem(item.id)}
+                                      className="text-destructive focus:text-destructive"
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      削除
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}
