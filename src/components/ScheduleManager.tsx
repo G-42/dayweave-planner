@@ -614,89 +614,97 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                     </div>
                   </div>
 
-                  {/* Schedule Items */}
+                  {/* Schedule Items with Lines */}
                   {todayItems.length > 0 ? (
-                    <div className="space-y-2">
-                      {todayItems.map((item) => (
-                        <div
-                          key={item.id}
-                          className={`flex items-center gap-3 p-4 rounded-lg border transition-colors ${
-                            item.completed
-                              ? 'bg-success-soft/20 border-success/30 opacity-75'
-                              : 'bg-background border-border hover:bg-accent/50'
-                          }`}
-                        >
-                          <button
-                            onClick={() => handleToggleComplete(item.id)}
-                            className="flex-shrink-0"
+                    <div className="relative space-y-4">
+                      {/* Vertical connecting line */}
+                      <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-gradient-to-b from-primary/30 to-primary/10 rounded-full" 
+                           style={{zIndex: 0}} />
+                      
+                      {todayItems.map((item, index) => (
+                        <div key={item.id} className="relative">
+                          {/* Connection dot */}
+                          <div className="absolute left-5 top-6 w-3 h-3 bg-primary rounded-full border-2 border-background shadow-sm z-10" />
+                          
+                          <div
+                            className={`ml-12 flex items-center gap-3 p-4 rounded-lg border transition-colors ${
+                              item.completed
+                                ? 'bg-success-soft/20 border-success/30 opacity-75'
+                                : 'bg-background border-border hover:bg-accent/50'
+                            }`}
                           >
-                            {item.completed ? (
-                              <CheckCircle className="w-5 h-5 text-success" />
-                            ) : (
-                              <Circle className="w-5 h-5 text-muted-foreground hover:text-primary" />
-                            )}
-                          </button>
+                            <button
+                              onClick={() => handleToggleComplete(item.id)}
+                              className="flex-shrink-0"
+                            >
+                              {item.completed ? (
+                                <CheckCircle className="w-5 h-5 text-success" />
+                              ) : (
+                                <Circle className="w-5 h-5 text-muted-foreground hover:text-primary" />
+                              )}
+                            </button>
 
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[120px]">
-                            <Clock className="w-4 h-4" />
-                            {item.startTime}〜{item.endTime}
-                          </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[120px]">
+                              <Clock className="w-4 h-4" />
+                              {item.startTime}〜{item.endTime}
+                            </div>
 
-                          <div className="flex-1">
-                            <div className={`font-medium ${
-                              item.completed ? 'line-through text-muted-foreground' : 'text-foreground'
-                            }`}>
-                              {item.title}
-                            </div>
-                            
-                            <div className="flex items-center gap-2 mt-1">
-                              {item.priority && item.priority !== 'none' && (
-                                <Badge variant="outline" className={`text-xs ${getPriorityColor(item.priority)}`}>
-                                  {item.priority === 'high' ? '高' : item.priority === 'medium' ? '中' : '低'}優先度
-                                </Badge>
-                              )}
-                              
-                              {item.category && (
-                                <Badge variant="outline" className="text-xs">
-                                  {item.category}
-                                </Badge>
-                              )}
-                              
-                              {item.isHabit && (
-                                <Badge variant="outline" className="text-xs bg-success-soft border-success text-success-foreground">
-                                  <Target className="w-3 h-3 mr-1" />
-                                  習慣: {item.habitName}
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            {item.notes && (
-                              <div className="text-xs text-muted-foreground mt-1 italic">
-                                {item.notes}
+                            <div className="flex-1">
+                              <div className={`font-medium ${
+                                item.completed ? 'line-through text-muted-foreground' : 'text-foreground'
+                              }`}>
+                                {item.title}
                               </div>
-                            )}
-                          </div>
+                              
+                              <div className="flex items-center gap-2 mt-1">
+                                {item.priority && item.priority !== 'none' && (
+                                  <Badge variant="outline" className={`text-xs ${getPriorityColor(item.priority)}`}>
+                                    {item.priority === 'high' ? '高' : item.priority === 'medium' ? '中' : '低'}優先度
+                                  </Badge>
+                                )}
+                                
+                                {item.category && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {item.category}
+                                  </Badge>
+                                )}
+                                
+                                {item.isHabit && (
+                                  <Badge variant="outline" className="text-xs bg-success-soft border-success text-success-foreground">
+                                    <Target className="w-3 h-3 mr-1" />
+                                    習慣: {item.habitName}
+                                  </Badge>
+                                )}
+                              </div>
+                              
+                              {item.notes && (
+                                <div className="text-xs text-muted-foreground mt-1 italic">
+                                  {item.notes}
+                                </div>
+                              )}
+                            </div>
 
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border">
-                              <DropdownMenuItem onClick={() => handleEditItem(item)}>
-                                <Edit className="w-4 h-4 mr-2" />
-                                編集
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleDeleteItem(item.id)}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                削除
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border">
+                                <DropdownMenuItem onClick={() => handleEditItem(item)}>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  編集
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleDeleteItem(item.id)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  削除
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </div>
                       ))}
                     </div>
