@@ -42,7 +42,7 @@ export default function Dashboard() {
   const [goals, setGoals] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
-  const [hasCompletedSetup, setHasCompletedSetup] = useState(false);
+  const [hasCompletedSetup, setHasCompletedSetup] = useState(false); // 常にfalseで開始
 
   useEffect(() => {
     if (!loading && !user) {
@@ -60,14 +60,27 @@ export default function Dashboard() {
     const userData = localStorage.getItem('dayweave-user');
     const templatesData = localStorage.getItem('dayweave-templates');
     
+    console.log('Setup check - userData:', userData);
+    console.log('Setup check - templatesData:', templatesData);
+    
     // Check if user has completed initial setup (has templates or habits)
     if (userData || templatesData) {
       const userSetup = userData ? JSON.parse(userData) : null;
       const templates = templatesData ? JSON.parse(templatesData) : [];
       
+      console.log('Setup check - userSetup:', userSetup);
+      console.log('Setup check - templates:', templates);
+      
       if ((userSetup && userSetup.habits && userSetup.habits.length > 0) || templates.length > 0) {
         setHasCompletedSetup(true);
+        console.log('Setup completed detected');
+      } else {
+        setHasCompletedSetup(false);
+        console.log('Setup not completed');
       }
+    } else {
+      setHasCompletedSetup(false);
+      console.log('No setup data found');
     }
   };
 
@@ -277,7 +290,17 @@ export default function Dashboard() {
           </Alert>
         )}
 
-        {/* Main Content */}
+        {/* Main Content - 初期設定状況に関係なく設定ボタンを表示 */}
+        <div className="mb-4 text-center">
+          <Button 
+            onClick={() => setIsSetupDialogOpen(true)}
+            className="bg-gradient-to-r from-primary to-primary-glow"
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            {hasCompletedSetup ? '初期設定を再実行' : '初期設定を開始'}
+          </Button>
+        </div>
+
         {hasCompletedSetup ? (
           <Tabs defaultValue="schedule" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
