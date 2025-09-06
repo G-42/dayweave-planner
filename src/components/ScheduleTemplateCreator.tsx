@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, X, Clock, ArrowRight, ArrowLeft, Moon, Sun } from 'lucide-react';
+import { Plus, X, Clock, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface ScheduleItem {
   id: string;
@@ -43,7 +43,6 @@ export const ScheduleTemplateCreator = ({ habits, onComplete, onBack }: Schedule
       items: [],
     }))
   );
-  const [sleepWakeTimes, setSleepWakeTimes] = useState<{[key: string]: {sleepTime: string, wakeTime: string}}>({});
   const [newItem, setNewItem] = useState({
     startTime: '',
     endTime: '',
@@ -112,41 +111,7 @@ export const ScheduleTemplateCreator = ({ habits, onComplete, onBack }: Schedule
       return;
     }
 
-    // Save sleep/wake times to localStorage
-    localStorage.setItem('dayweave-sleep-wake-times', JSON.stringify(sleepWakeTimes));
-    
     onComplete(templates);
-  };
-
-  const addSleepWakeItems = () => {
-    const currentTemplateId = templateTypes[currentTemplate].id;
-    const times = sleepWakeTimes[currentTemplateId];
-    
-    if (times?.sleepTime && times?.wakeTime) {
-      // Add sleep item
-      const sleepItem: ScheduleItem = {
-        id: `sleep-${Date.now()}`,
-        startTime: times.sleepTime,
-        endTime: times.sleepTime,
-        title: '睡眠',
-        isHabit: false,
-      };
-      
-      // Add wake up item
-      const wakeItem: ScheduleItem = {
-        id: `wake-${Date.now()}`,
-        startTime: times.wakeTime,
-        endTime: times.wakeTime,
-        title: '起床',
-        isHabit: false,
-      };
-
-      setTemplates(prev => prev.map((template, index) => 
-        index === currentTemplate 
-          ? { ...template, items: [...template.items.filter(item => !item.title.includes('睡眠') && !item.title.includes('起床')), sleepItem, wakeItem].sort((a, b) => a.startTime.localeCompare(b.startTime)) }
-          : template
-      ));
-    }
   };
 
   const currentTemplateData = templates[currentTemplate];
@@ -195,135 +160,6 @@ export const ScheduleTemplateCreator = ({ habits, onComplete, onBack }: Schedule
           <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
       </div>
-
-      {/* Sleep/Wake Time Settings */}
-      <Card className="shadow-medium border-0 bg-gradient-to-r from-primary/5 to-primary-glow/10 backdrop-blur">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Moon className="w-5 h-5 text-primary" />
-            睡眠・起床時間設定
-          </CardTitle>
-          <CardDescription>{currentTemplateType.name}の睡眠スケジュールを設定してください</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="sleepTime" className="flex items-center gap-1">
-                <Moon className="w-4 h-4" />
-                就寝時間
-              </Label>
-              <div className="flex gap-2">
-                <Select
-                  value={sleepWakeTimes[currentTemplateData.id]?.sleepTime?.split(':')[0] || ''}
-                  onValueChange={(hour) => {
-                    const minute = sleepWakeTimes[currentTemplateData.id]?.sleepTime?.split(':')[1] || '00';
-                    setSleepWakeTimes(prev => ({
-                      ...prev,
-                      [currentTemplateData.id]: {
-                        ...prev[currentTemplateData.id],
-                        sleepTime: `${hour.padStart(2, '0')}:${minute}`
-                      }
-                    }));
-                  }}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="時" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({length: 24}, (_, i) => (
-                      <SelectItem key={i} value={i.toString()}>{i}時</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={sleepWakeTimes[currentTemplateData.id]?.sleepTime?.split(':')[1] || ''}
-                  onValueChange={(minute) => {
-                    const hour = sleepWakeTimes[currentTemplateData.id]?.sleepTime?.split(':')[0] || '00';
-                    setSleepWakeTimes(prev => ({
-                      ...prev,
-                      [currentTemplateData.id]: {
-                        ...prev[currentTemplateData.id],
-                        sleepTime: `${hour.padStart(2, '0')}:${minute}`
-                      }
-                    }));
-                  }}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="分" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({length: 12}, (_, i) => (
-                      <SelectItem key={i} value={(i * 5).toString().padStart(2, '0')}>{i * 5}分</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="wakeTime" className="flex items-center gap-1">
-                <Sun className="w-4 h-4" />
-                起床時間
-              </Label>
-              <div className="flex gap-2">
-                <Select
-                  value={sleepWakeTimes[currentTemplateData.id]?.wakeTime?.split(':')[0] || ''}
-                  onValueChange={(hour) => {
-                    const minute = sleepWakeTimes[currentTemplateData.id]?.wakeTime?.split(':')[1] || '00';
-                    setSleepWakeTimes(prev => ({
-                      ...prev,
-                      [currentTemplateData.id]: {
-                        ...prev[currentTemplateData.id],
-                        wakeTime: `${hour.padStart(2, '0')}:${minute}`
-                      }
-                    }));
-                  }}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="時" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({length: 24}, (_, i) => (
-                      <SelectItem key={i} value={i.toString()}>{i}時</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={sleepWakeTimes[currentTemplateData.id]?.wakeTime?.split(':')[1] || ''}
-                  onValueChange={(minute) => {
-                    const hour = sleepWakeTimes[currentTemplateData.id]?.wakeTime?.split(':')[0] || '00';
-                    setSleepWakeTimes(prev => ({
-                      ...prev,
-                      [currentTemplateData.id]: {
-                        ...prev[currentTemplateData.id],
-                        wakeTime: `${hour.padStart(2, '0')}:${minute}`
-                      }
-                    }));
-                  }}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="分" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({length: 12}, (_, i) => (
-                      <SelectItem key={i} value={(i * 5).toString().padStart(2, '0')}>{i * 5}分</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          
-          <Button
-            onClick={addSleepWakeItems}
-            disabled={!sleepWakeTimes[currentTemplateData.id]?.sleepTime || !sleepWakeTimes[currentTemplateData.id]?.wakeTime}
-            className="w-full bg-gradient-to-r from-primary to-primary-glow"
-          >
-            <Clock className="w-4 h-4 mr-1" />
-            睡眠・起床時間をスケジュールに追加
-          </Button>
-        </CardContent>
-      </Card>
 
       {/* Add New Item */}
       <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">

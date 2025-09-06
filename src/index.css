@@ -178,4 +178,24 @@
   .transition-quick {
     transition: var(--transition-quick);
   }
+  
+  /* Fireworks Animation */
+  @keyframes firework {
+    0% {
+      transform: scale(0) rotate(0deg);
+      opacity: 1;
+    }
+    15% {
+      transform: scale(1.2) rotate(180deg);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0) rotate(360deg) translateY(-200px);
+      opacity: 0;
+    }
+  }
+  
+  .animate-firework {
+    animation: firework 1.5s ease-out forwards;
+  }
 }
