@@ -12,6 +12,9 @@ import { GoalHierarchy } from './GoalHierarchy';
 import { Fireworks } from './Fireworks';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from './AuthProvider';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DailyTask {
   id: string;
