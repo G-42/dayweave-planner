@@ -14,10 +14,10 @@ export default function Welcome() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    if (!loading && user && isSubscribed) {
-    navigate("/dashboard");
-  }
-}, [user, loading, isSubscribed, navigate]); 
+    if (!loading && user) {
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
 
   const handleGetStarted = () => {
     navigate('/auth');
@@ -135,14 +135,15 @@ export default function Welcome() {
                 )}
               </CardContent>
             </Card>
+            <section id="pricing">
             {/* Monthly Plan */}
             <Card className="relative border-primary shadow-lg">
               <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-primary">
-                人気
+                とりあえず１ヶ月
               </Badge>
               <CardHeader>
                 <CardTitle className="text-xl">月額プラン</CardTitle>
-                <CardDescription>継続して使いたい方に</CardDescription>
+                <CardDescription>無制限を使ってみたい方に</CardDescription>
                 <div className="text-3xl font-bold">¥300<span className="text-sm font-normal">/月</span></div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -216,6 +217,7 @@ export default function Welcome() {
                 </Button>
               </CardContent>
             </Card>
+            </section>
           </div>
 
           {/* Features */}
