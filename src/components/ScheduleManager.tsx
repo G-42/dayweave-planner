@@ -8,6 +8,7 @@ import { ScheduleItemEditor } from './ScheduleItemEditor';
 import { WeeklyView } from './WeeklyView';
 import { TemplateEditor } from './TemplateEditor';
 import { SavedItemsPanel } from './SavedItemsPanel';
+import { DragDropScheduleBuilder } from './DragDropScheduleBuilder';
 import { Plus, Clock, CheckCircle, Circle, Target, Calendar, Edit, Trash2, MoreHorizontal, Save, ChevronDown, Bookmark, Archive } from 'lucide-react';
 import {
   DropdownMenu,
@@ -339,6 +340,17 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
     }
   };
 
+  const formatTime = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  };
+
+  const parseTime = (timeStr: string): number => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
   const todayItems = getTodayItems();
   const completedToday = todayItems.filter(item => item.completed).length;
   const totalToday = todayItems.length;
@@ -376,8 +388,9 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
         {/* Schedule Section */}
         <div className="lg:col-span-1">
           <Tabs defaultValue="today" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="today">今日のスケジュール</TabsTrigger>
+              <TabsTrigger value="builder">ドラッグ&ドロップ</TabsTrigger>
               <TabsTrigger value="weekly">週間表示</TabsTrigger>
             </TabsList>
 
@@ -794,6 +807,49 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Drag & Drop Builder */}
+            <TabsContent value="builder">
+              <DragDropScheduleBuilder
+                onScheduleChange={(activities) => {
+                  const today = new Date().toISOString().split('T')[0];
+                  const newScheduleItems = activities.map(activity => ({
+                    id: activity.id,
+                    startTime: formatTime(activity.startTime),
+                    endTime: formatTime(activity.startTime + activity.duration),
+                    title: activity.title,
+                    isHabit: false,
+                    completed: false,
+                    date: today,
+                    category: activity.category,
+                    priority: 'none' as const,
+                    notes: ''
+                  }));
+                  
+                  // Remove existing items for today and add new ones
+                  const otherDayItems = scheduleItems.filter(item => item.date !== today);
+                  const updatedItems = [...otherDayItems, ...newScheduleItems];
+                  setScheduleItems(updatedItems);
+                }}
+                initialSchedule={scheduleItems
+                  .filter(item => item.date === new Date().toISOString().split('T')[0])
+                  .map(item => {
+                    const startMinutes = parseTime(item.startTime);
+                    const endMinutes = parseTime(item.endTime);
+                    return {
+                      id: item.id,
+                      activityId: item.id,
+                      title: item.title,
+                      startTime: startMinutes,
+                      duration: endMinutes - startMinutes,
+                      color: getPriorityColor(item.priority),
+                      icon: <Clock className="w-4 h-4" />,
+                      category: item.category || 'custom'
+                    };
+                  })
+                }
+              />
             </TabsContent>
 
             {/* Weekly View */}
