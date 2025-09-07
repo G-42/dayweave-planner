@@ -171,24 +171,60 @@ export default function Dashboard() {
     return isSubscribed; // Analytics only for premium users
   };
 
-  const handleSetupComplete = (habits: Habit[]) => {
-    const setupData = {
-      habits: habits.map(h => ({ name: h.name, dailyGoal: h.dailyGoal, unit: h.unit })),
-      completedAt: new Date().toISOString()
-    };
-    
-    // Save setup data to localStorage
-    localStorage.setItem('dayweave-user', JSON.stringify(setupData));
-    setHasCompletedSetup(true);
-    setIsSetupDialogOpen(false);
-    
-    // Refresh user data
-    loadUserData();
-    
-    toast({
-      title: "初期設定が完了しました！",
-      description: `${habits.length}個の習慣が設定されました`,
-    });
+  const handleSetupComplete = async (habits: Habit[]) => {
+    try {
+      // Save habits to Supabase
+      const habitsToInsert = habits.map(habit => ({
+        user_id: user?.id,
+        name: habit.name,
+        unit: habit.unit,
+        daily_goal: habit.dailyGoal,
+        total_value: 0,
+        today_value: 0,
+        consecutive_days: 0,
+        last_updated_date: new Date().toISOString().split('T')[0],
+        history: {}
+      }));
+
+      const { error: habitsError } = await supabase
+        .from('habits')
+        .insert(habitsToInsert);
+
+      if (habitsError) {
+        console.error('Error saving habits:', habitsError);
+        toast({
+          title: "エラーが発生しました",
+          description: "習慣の保存に失敗しました",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const setupData = {
+        habits: habits.map(h => ({ name: h.name, dailyGoal: h.dailyGoal, unit: h.unit })),
+        completedAt: new Date().toISOString()
+      };
+      
+      // Save setup data to localStorage
+      localStorage.setItem('dayweave-user', JSON.stringify(setupData));
+      setHasCompletedSetup(true);
+      setIsSetupDialogOpen(false);
+      
+      // Refresh user data
+      await loadUserData();
+      
+      toast({
+        title: "初期設定が完了しました！",
+        description: `${habits.length}個の習慣が設定されました`,
+      });
+    } catch (error) {
+      console.error('Setup completion error:', error);
+      toast({
+        title: "エラーが発生しました",
+        description: "初期設定の完了に失敗しました",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSetupSkip = () => {
@@ -205,6 +241,46 @@ export default function Dashboard() {
       title: "初期設定をスキップしました",
       description: "後でいつでも習慣を追加できます",
     });
+  };
+
+  const handleAddTask = async () => {
+    const taskTitle = prompt('タスク名を入力してください:');
+    if (!taskTitle || !taskTitle.trim()) return;
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { error } = await supabase
+        .from('daily_tasks')
+        .insert({
+          user_id: user?.id,
+          title: taskTitle.trim(),
+          task_date: today,
+          completed: false
+        });
+
+      if (error) {
+        console.error('Error adding task:', error);
+        toast({
+          title: "エラーが発生しました",
+          description: "タスクの追加に失敗しました",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await loadUserData();
+      toast({
+        title: "タスクを追加しました",
+        description: taskTitle,
+      });
+    } catch (error) {
+      console.error('Add task error:', error);
+      toast({
+        title: "エラーが発生しました",
+        description: "タスクの追加に失敗しました",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading || isLoadingData) {
@@ -431,12 +507,7 @@ export default function Dashboard() {
                       <Button 
                         size="sm"
                         disabled={!canAddMoreTasks()}
-                        onClick={() => {
-                          toast({
-                            title: "タスクの追加",
-                            description: "この機能は開発中です",
-                          });
-                        }}
+                        onClick={handleAddTask}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         追加
