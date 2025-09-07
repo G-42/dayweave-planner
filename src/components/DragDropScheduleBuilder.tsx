@@ -183,23 +183,23 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
           </CardHeader>
           <CardContent>
             <div className="relative" ref={timelineRef}>
-              {/* Time labels */}
-              <div className="grid grid-cols-24 gap-0 mb-4">
+              {/* Time labels - Hours only */}
+              <div className="flex border-b border-border mb-4">
                 {timeSlots.map((slot) => (
-                  <div key={slot.hour} className="text-xs text-center text-muted-foreground border-r border-border last:border-r-0 py-2">
-                    {slot.hour}
+                  <div key={slot.hour} className="flex-1 text-sm text-center text-muted-foreground py-2 border-r border-border last:border-r-0">
+                    {slot.hour}:00
                   </div>
                 ))}
               </div>
 
               {/* Timeline grid */}
               <div className="relative min-h-[120px] border border-border rounded">
-                {/* Hour markers */}
-                <div className="absolute inset-0 grid grid-cols-24">
+                {/* Hour drop zones */}
+                <div className="absolute inset-0 flex">
                   {timeSlots.map((slot) => (
                     <div
                       key={slot.hour}
-                      className="border-r border-border last:border-r-0 h-full hover:bg-muted/30 transition-colors"
+                      className="flex-1 h-full border-r border-border last:border-r-0 hover:bg-muted/30 transition-colors cursor-pointer"
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, slot.minutes)}
                     />
@@ -239,24 +239,6 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
                 })}
               </div>
 
-              {/* 15-minute markers */}
-              <div className="mt-2 grid grid-cols-96 gap-0">
-                {Array.from({ length: 96 }, (_, i) => {
-                  const minutes = i * 15;
-                  const hour = Math.floor(minutes / 60);
-                  const min = minutes % 60;
-                  return (
-                    <div
-                      key={i}
-                      className={`text-xs text-center py-1 border-l border-border/30 hover:bg-muted/20 cursor-pointer ${i % 4 === 0 ? 'font-medium' : 'text-muted-foreground'}`}
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, minutes)}
-                    >
-                      {i % 4 === 0 ? '' : min.toString().padStart(2, '0')}
-                    </div>
-                  );
-                })}
-              </div>
             </div>
 
             {/* Summary */}
