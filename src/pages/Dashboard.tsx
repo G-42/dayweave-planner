@@ -13,9 +13,7 @@ import { ScheduleManager } from '@/components/ScheduleManager';
 import { ScheduleTemplateCreator } from '@/components/ScheduleTemplateCreator';
 import { InitialSetup } from '@/components/InitialSetup';
 import { GoalManager } from '@/components/GoalManager';
-import { 
-  Calendar, Plus, CheckCircle, Circle, Target, TrendingUp, Crown, Settings, Clock, Users, BookOpen 
-} from 'lucide-react';
+import { Calendar, Plus, CheckCircle, Circle, Target, TrendingUp, Crown, Settings, Clock, Users, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Habit interface for initial setup
@@ -35,17 +33,23 @@ interface TemplateScheduleItem {
   isHabit: boolean;
   habitName?: string;
 }
-
 interface TemplateData {
   id: string;
   name: string;
   items: TemplateScheduleItem[];
 }
-
 export default function Dashboard() {
-  const { user, session, isSubscribed, subscriptionTier, loading } = useAuth();
+  const {
+    user,
+    session,
+    isSubscribed,
+    subscriptionTier,
+    loading
+  } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [habits, setHabits] = useState<any[]>([]);
   const [dailyTasks, setDailyTasks] = useState<any[]>([]);
   const [goals, setGoals] = useState<any[]>([]);
@@ -58,29 +62,24 @@ export default function Dashboard() {
       navigate('/auth');
       return;
     }
-    
     if (user) {
       loadUserData();
       checkSetupStatus();
     }
   }, [user, loading, navigate]);
-
   const checkSetupStatus = () => {
     const userData = localStorage.getItem('dayweave-user');
     const templatesData = localStorage.getItem('dayweave-templates');
-    
     console.log('Setup check - userData:', userData);
     console.log('Setup check - templatesData:', templatesData);
-    
+
     // Check if user has completed initial setup (has templates or habits)
     if (userData || templatesData) {
       const userSetup = userData ? JSON.parse(userData) : null;
       const templates = templatesData ? JSON.parse(templatesData) : [];
-      
       console.log('Setup check - userSetup:', userSetup);
       console.log('Setup check - templates:', templates);
-      
-      if ((userSetup && userSetup.habits && userSetup.habits.length > 0) || templates.length > 0) {
+      if (userSetup && userSetup.habits && userSetup.habits.length > 0 || templates.length > 0) {
         setHasCompletedSetup(true);
         console.log('Setup completed detected');
       } else {
@@ -92,85 +91,74 @@ export default function Dashboard() {
       console.log('No setup data found');
     }
   };
-
   const loadUserData = async () => {
     try {
       // Load habits
-      const { data: habitsData, error: habitsError } = await supabase
-        .from('habits')
-        .select('*')
-        .eq('user_id', user?.id);
-
+      const {
+        data: habitsData,
+        error: habitsError
+      } = await supabase.from('habits').select('*').eq('user_id', user?.id);
       if (habitsError) throw habitsError;
       setHabits(habitsData || []);
 
       // Load daily tasks for today
       const today = new Date().toISOString().split('T')[0];
-      const { data: tasksData, error: tasksError } = await supabase
-        .from('daily_tasks')
-        .select('*')
-        .eq('user_id', user?.id)
-        .eq('task_date', today);
-
+      const {
+        data: tasksData,
+        error: tasksError
+      } = await supabase.from('daily_tasks').select('*').eq('user_id', user?.id).eq('task_date', today);
       if (tasksError) throw tasksError;
       setDailyTasks(tasksData || []);
 
       // Load goals
-      const { data: goalsData, error: goalsError } = await supabase
-        .from('goals')
-        .select('*')
-        .eq('user_id', user?.id);
-
+      const {
+        data: goalsData,
+        error: goalsError
+      } = await supabase.from('goals').select('*').eq('user_id', user?.id);
       if (goalsError) throw goalsError;
       setGoals(goalsData || []);
-
     } catch (error) {
       console.error('Error loading user data:', error);
       toast({
         title: "データの読み込みに失敗しました",
         description: "再度お試しください",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoadingData(false);
     }
   };
-
   const handleManageSubscription = async () => {
     if (!session || !isSubscribed) return;
-    
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal', {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('customer-portal', {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
-
       if (error) {
         console.error('Customer portal error:', error);
         return;
       }
-
       window.open(data.url, '_blank');
     } catch (error) {
       console.error('Failed to open customer portal:', error);
     }
   };
-
   const canAddMoreHabits = () => {
     if (isSubscribed) return true;
     return habits.length < 1; // Free plan: 1 habit only
   };
-
   const canAddMoreTasks = () => {
     if (isSubscribed) return true;
     return dailyTasks.length < 3; // Free plan: 3 tasks per day
   };
-
   const canViewAnalytics = () => {
     return isSubscribed; // Analytics only for premium users
   };
-
   const handleSetupComplete = async (habits: Habit[]) => {
     try {
       // Save habits to Supabase
@@ -185,134 +173,119 @@ export default function Dashboard() {
         last_updated_date: new Date().toISOString().split('T')[0],
         history: {}
       }));
-
-      const { error: habitsError } = await supabase
-        .from('habits')
-        .insert(habitsToInsert);
-
+      const {
+        error: habitsError
+      } = await supabase.from('habits').insert(habitsToInsert);
       if (habitsError) {
         console.error('Error saving habits:', habitsError);
         toast({
           title: "エラーが発生しました",
           description: "習慣の保存に失敗しました",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-
       const setupData = {
-        habits: habits.map(h => ({ name: h.name, dailyGoal: h.dailyGoal, unit: h.unit })),
+        habits: habits.map(h => ({
+          name: h.name,
+          dailyGoal: h.dailyGoal,
+          unit: h.unit
+        })),
         completedAt: new Date().toISOString()
       };
-      
+
       // Save setup data to localStorage
       localStorage.setItem('dayweave-user', JSON.stringify(setupData));
       setHasCompletedSetup(true);
       setIsSetupDialogOpen(false);
-      
+
       // Refresh user data
       await loadUserData();
-      
       toast({
         title: "初期設定が完了しました！",
-        description: `${habits.length}個の習慣が設定されました`,
+        description: `${habits.length}個の習慣が設定されました`
       });
     } catch (error) {
       console.error('Setup completion error:', error);
       toast({
         title: "エラーが発生しました",
         description: "初期設定の完了に失敗しました",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleSetupSkip = () => {
     const setupData = {
       habits: [],
       completedAt: new Date().toISOString()
     };
-    
     localStorage.setItem('dayweave-user', JSON.stringify(setupData));
     setHasCompletedSetup(true);
     setIsSetupDialogOpen(false);
-    
     toast({
       title: "初期設定をスキップしました",
-      description: "後でいつでも習慣を追加できます",
+      description: "後でいつでも習慣を追加できます"
     });
   };
-
   const handleAddTask = async () => {
     const taskTitle = prompt('タスク名を入力してください:');
     if (!taskTitle || !taskTitle.trim()) return;
-
     try {
       const today = new Date().toISOString().split('T')[0];
-      const { error } = await supabase
-        .from('daily_tasks')
-        .insert({
-          user_id: user?.id,
-          title: taskTitle.trim(),
-          task_date: today,
-          completed: false
-        });
-
+      const {
+        error
+      } = await supabase.from('daily_tasks').insert({
+        user_id: user?.id,
+        title: taskTitle.trim(),
+        task_date: today,
+        completed: false
+      });
       if (error) {
         console.error('Error adding task:', error);
         toast({
           title: "エラーが発生しました",
           description: "タスクの追加に失敗しました",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-
       await loadUserData();
       toast({
         title: "タスクを追加しました",
-        description: taskTitle,
+        description: taskTitle
       });
     } catch (error) {
       console.error('Add task error:', error);
       toast({
         title: "エラーが発生しました",
         description: "タスクの追加に失敗しました",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   if (loading || isLoadingData) {
-    return (
-      <Layout>
+    return <Layout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
         </div>
-      </Layout>
-    );
+      </Layout>;
   }
-
   if (!user) {
     return null;
   }
-
   const currentDate = new Date().toLocaleDateString('ja-JP', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     weekday: 'long'
   });
-
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'おはようございます';
     if (hour < 18) return 'こんにちは';
     return 'こんばんは';
   };
-
-  return (
-    <Layout>
+  return <Layout>
       <div className="p-4 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
@@ -320,9 +293,7 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
               {getGreeting()}、{user.user_metadata?.name || 'ユーザー'}さん
             </h1>
-            {isSubscribed && (
-              <Crown className="w-5 h-5 text-yellow-500" />
-            )}
+            {isSubscribed && <Crown className="w-5 h-5 text-yellow-500" />}
           </div>
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <Calendar className="w-4 h-4" />
@@ -330,36 +301,24 @@ export default function Dashboard() {
           </div>
           
           {/* Setup Button */}
-          {!hasCompletedSetup && (
-            <Button 
-              onClick={() => setIsSetupDialogOpen(true)}
-              className="bg-gradient-to-r from-primary to-primary-glow"
-            >
+          {!hasCompletedSetup && <Button onClick={() => setIsSetupDialogOpen(true)} className="bg-gradient-to-r from-primary to-primary-glow">
               <BookOpen className="w-4 h-4 mr-2" />
               初期設定を開始
-            </Button>
-          )}
+            </Button>}
         </div>
 
         {/* Subscription Status */}
-        {!isSubscribed ? (
-          <Alert className="border-warning bg-warning/10">
+        {!isSubscribed ? <Alert className="border-warning bg-warning/10">
             <AlertDescription className="text-center">
               <div className="space-y-2">
                 <p className="font-medium">無料プランをご利用中です</p>
                 <p className="text-sm">習慣1個、タスク1日3個まで利用可能です。</p>
-                <Button 
-                  onClick={() => navigate('/welcome')}
-                  size="sm"
-                  className="bg-gradient-to-r from-primary to-primary-glow"
-                >
+                <Button onClick={() => navigate('/welcome')} size="sm" className="bg-gradient-to-r from-primary to-primary-glow">
                   プレミアムにアップグレード
                 </Button>
               </div>
             </AlertDescription>
-          </Alert>
-        ) : (
-          <Alert className="border-success bg-success/10">
+          </Alert> : <Alert className="border-success bg-success/10">
             <AlertDescription className="text-center">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -368,40 +327,25 @@ export default function Dashboard() {
                     プレミアムプラン ({subscriptionTier === 'yearly' ? '年額' : '月額'})
                   </span>
                 </div>
-                <Button 
-                  onClick={handleManageSubscription}
-                  size="sm"
-                  variant="outline"
-                >
+                <Button onClick={handleManageSubscription} size="sm" variant="outline">
                   <Settings className="w-4 h-4 mr-2" />
                   管理
                 </Button>
               </div>
             </AlertDescription>
-          </Alert>
-        )}
+          </Alert>}
 
         {/* Main Content */}
 
-        {hasCompletedSetup ? (
-          <Tabs defaultValue="schedule" className="space-y-6">
+        {hasCompletedSetup ? <Tabs defaultValue="schedule" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="schedule" className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 スケジュール
               </TabsTrigger>
-              <TabsTrigger value="habits" className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
-                習慣
-              </TabsTrigger>
-              <TabsTrigger value="goals" className="flex items-center gap-2">
-                <Target className="w-4 h-4" />
-                目標
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
-                分析
-              </TabsTrigger>
+              
+              
+              
             </TabsList>
 
             <TabsContent value="schedule" className="space-y-4">
@@ -453,44 +397,30 @@ export default function Dashboard() {
                           継続したい習慣を記録しましょう
                         </CardDescription>
                       </div>
-                      <Button 
-                        size="sm"
-                        disabled={!canAddMoreHabits()}
-                        onClick={() => {
-                          toast({
-                            title: "習慣の追加",
-                            description: "この機能は開発中です",
-                          });
-                        }}
-                      >
+                      <Button size="sm" disabled={!canAddMoreHabits()} onClick={() => {
+                    toast({
+                      title: "習慣の追加",
+                      description: "この機能は開発中です"
+                    });
+                  }}>
                         <Plus className="w-4 h-4 mr-2" />
                         追加
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {habits.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
+                    {habits.length === 0 ? <div className="text-center py-8 text-muted-foreground">
                         <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>まだ習慣が登録されていません</p>
-                        {canAddMoreHabits() ? (
-                          <p className="text-sm">「追加」ボタンから新しい習慣を作成しましょう</p>
-                        ) : (
-                          <p className="text-sm">無料プランでは1個まで登録できます</p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {habits.map((habit) => (
-                          <div key={habit.id} className="p-3 border rounded-lg">
+                        {canAddMoreHabits() ? <p className="text-sm">「追加」ボタンから新しい習慣を作成しましょう</p> : <p className="text-sm">無料プランでは1個まで登録できます</p>}
+                      </div> : <div className="space-y-3">
+                        {habits.map(habit => <div key={habit.id} className="p-3 border rounded-lg">
                             <div className="flex items-center justify-between">
                               <span className="font-medium">{habit.name}</span>
                               <Badge variant="outline">進行中</Badge>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          </div>)}
+                      </div>}
                   </CardContent>
                 </Card>
 
@@ -504,68 +434,45 @@ export default function Dashboard() {
                           今日やることを管理しましょう
                         </CardDescription>
                       </div>
-                      <Button 
-                        size="sm"
-                        disabled={!canAddMoreTasks()}
-                        onClick={handleAddTask}
-                      >
+                      <Button size="sm" disabled={!canAddMoreTasks()} onClick={handleAddTask}>
                         <Plus className="w-4 h-4 mr-2" />
                         追加
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {dailyTasks.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
+                    {dailyTasks.length === 0 ? <div className="text-center py-8 text-muted-foreground">
                         <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>今日のタスクはありません</p>
-                        {canAddMoreTasks() ? (
-                          <p className="text-sm">「追加」ボタンから新しいタスクを作成しましょう</p>
-                        ) : (
-                          <p className="text-sm">無料プランでは1日3個まで登録できます</p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {dailyTasks.map((task) => (
-                          <div key={task.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                        {canAddMoreTasks() ? <p className="text-sm">「追加」ボタンから新しいタスクを作成しましょう</p> : <p className="text-sm">無料プランでは1日3個まで登録できます</p>}
+                      </div> : <div className="space-y-3">
+                        {dailyTasks.map(task => <div key={task.id} className="flex items-center gap-3 p-3 border rounded-lg">
                             <Circle className="w-4 h-4 text-muted-foreground" />
                             <span className="flex-1">{task.title}</span>
                             <Badge variant={task.completed ? "default" : "outline"}>
                               {task.completed ? "完了" : "未完了"}
                             </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          </div>)}
+                      </div>}
                   </CardContent>
                 </Card>
               </div>
             </TabsContent>
 
             <TabsContent value="goals" className="space-y-4">
-              {!isSubscribed ? (
-                <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
+              {!isSubscribed ? <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
                   <CardContent className="text-center py-8 text-muted-foreground">
                     <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>目標管理はプレミアムプラン限定です</p>
-                    <Button 
-                      onClick={() => navigate('/welcome')}
-                      size="sm"
-                      className="mt-2"
-                    >
+                    <Button onClick={() => navigate('/welcome')} size="sm" className="mt-2">
                       アップグレード
                     </Button>
                   </CardContent>
-                </Card>
-              ) : (
-                <GoalManager />
-              )}
+                </Card> : <GoalManager />}
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-4">
-              {canViewAnalytics() ? (
-                <Card className="shadow-medium border-0 bg-gradient-to-r from-primary/10 to-primary-glow/20 backdrop-blur">
+              {canViewAnalytics() ? <Card className="shadow-medium border-0 bg-gradient-to-r from-primary/10 to-primary-glow/20 backdrop-blur">
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <TrendingUp className="w-5 h-5" />
@@ -580,54 +487,37 @@ export default function Dashboard() {
                       <p className="text-sm">近日中に利用可能になります</p>
                     </div>
                   </CardContent>
-                </Card>
-              ) : (
-                <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
+                </Card> : <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
                   <CardContent className="text-center py-8 text-muted-foreground">
                     <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>統計分析はプレミアムプラン限定です</p>
-                    <Button 
-                      onClick={() => navigate('/welcome')}
-                      size="sm"
-                      className="mt-2"
-                    >
+                    <Button onClick={() => navigate('/welcome')} size="sm" className="mt-2">
                       アップグレード
                     </Button>
                   </CardContent>
-                </Card>
-              )}
+                </Card>}
             </TabsContent>
-          </Tabs>
-        ) : (
-          <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
+          </Tabs> : <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
             <CardContent className="text-center py-12">
               <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
               <h3 className="text-lg font-semibold mb-2">まずは初期設定を行いましょう！</h3>
               <p className="text-muted-foreground mb-4">
                 習慣とスケジュールテンプレートを設定して、効率的な日々を始めませんか？
               </p>
-              <Button 
-                onClick={() => setIsSetupDialogOpen(true)}
-                className="bg-gradient-to-r from-primary to-primary-glow"
-              >
+              <Button onClick={() => setIsSetupDialogOpen(true)} className="bg-gradient-to-r from-primary to-primary-glow">
                 <BookOpen className="w-4 h-4 mr-2" />
                 初期設定を開始
               </Button>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
         
         {/* Setup Dialog */}
         <Dialog open={isSetupDialogOpen} onOpenChange={setIsSetupDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
-            <InitialSetup
-              onSetupComplete={handleSetupComplete}
-              onSkip={handleSetupSkip}
-            />
+            <InitialSetup onSetupComplete={handleSetupComplete} onSkip={handleSetupSkip} />
           </DialogContent>
         </Dialog>
       </div>
-    </Layout>
-  );
+    </Layout>;
 }
