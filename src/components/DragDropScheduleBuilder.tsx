@@ -174,17 +174,17 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
   const timeSlots = generateTimeSlots();
 
   return (
-    <div className="space-y-6">
-      {/* Activity Templates */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5" />
-            アクティビティテンプレート
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* Activity Templates - Left Side */}
+      <div className="lg:col-span-1">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Plus className="w-4 h-4" />
+              アクティビティ
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
             {activities.map((activity) => (
               <div
                 key={activity.id}
@@ -226,120 +226,122 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
             ))}
             <Button
               variant="outline"
-              className="h-20 border-dashed"
+              className="w-full h-20 border-dashed"
               onClick={handleAddCustomActivity}
             >
               <Plus className="w-4 h-4 mr-2" />
               カスタム
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle>24時間タイムライン</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="relative" ref={timelineRef}>
-            {/* Time labels */}
-            <div className="grid grid-cols-24 gap-0 mb-4">
-              {timeSlots.map((slot) => (
-                <div key={slot.hour} className="text-xs text-center text-muted-foreground border-r border-border last:border-r-0 py-2">
-                  {slot.hour}
-                </div>
-              ))}
-            </div>
-
-            {/* Timeline grid */}
-            <div className="relative min-h-[100px] border border-border rounded">
-              {/* Hour markers */}
-              <div className="absolute inset-0 grid grid-cols-24">
+      {/* Timeline - Right Side */}
+      <div className="lg:col-span-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">24時間タイムライン</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="relative" ref={timelineRef}>
+              {/* Time labels */}
+              <div className="grid grid-cols-24 gap-0 mb-4">
                 {timeSlots.map((slot) => (
-                  <div
-                    key={slot.hour}
-                    className="border-r border-border last:border-r-0 h-full hover:bg-muted/30 transition-colors"
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, slot.minutes)}
-                  />
+                  <div key={slot.hour} className="text-xs text-center text-muted-foreground border-r border-border last:border-r-0 py-2">
+                    {slot.hour}
+                  </div>
                 ))}
               </div>
 
-              {/* Placed activities */}
-              {placedActivities.map((activity) => {
-                const startPercent = (activity.startTime / 1440) * 100;
-                const widthPercent = (activity.duration / 1440) * 100;
-                
-                return (
-                  <div
-                    key={activity.id}
-                    className={`absolute top-2 ${activity.color} border rounded px-2 py-1 text-xs font-medium flex items-center gap-1 group cursor-pointer`}
-                    style={{
-                      left: `${startPercent}%`,
-                      width: `${widthPercent}%`,
-                      minWidth: '80px'
-                    }}
-                  >
-                    {activity.icon}
-                    <span className="truncate">{activity.title}</span>
-                    <span className="text-xs opacity-70">
-                      {formatTime(activity.startTime)}-{formatTime(activity.startTime + activity.duration)}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 ml-auto"
-                      onClick={() => handleRemoveActivity(activity.id)}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* 15-minute markers */}
-            <div className="mt-2 grid grid-cols-96 gap-0">
-              {Array.from({ length: 96 }, (_, i) => {
-                const minutes = i * 15;
-                const hour = Math.floor(minutes / 60);
-                const min = minutes % 60;
-                return (
-                  <div
-                    key={i}
-                    className={`text-xs text-center py-1 border-l border-border/30 hover:bg-muted/20 cursor-pointer ${i % 4 === 0 ? 'font-medium' : 'text-muted-foreground'}`}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, minutes)}
-                  >
-                    {i % 4 === 0 ? '' : min.toString().padStart(2, '0')}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Summary */}
-          {placedActivities.length > 0 && (
-            <div className="mt-4 p-4 bg-muted/30 rounded">
-              <h4 className="font-medium mb-2">スケジュール概要</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                {placedActivities
-                  .sort((a, b) => a.startTime - b.startTime)
-                  .map((activity) => (
-                    <div key={activity.id} className="flex items-center gap-2">
-                      {activity.icon}
-                      <span>{activity.title}</span>
-                      <span className="text-muted-foreground">
-                        {formatTime(activity.startTime)}
-                      </span>
-                    </div>
+              {/* Timeline grid */}
+              <div className="relative min-h-[120px] border border-border rounded">
+                {/* Hour markers */}
+                <div className="absolute inset-0 grid grid-cols-24">
+                  {timeSlots.map((slot) => (
+                    <div
+                      key={slot.hour}
+                      className="border-r border-border last:border-r-0 h-full hover:bg-muted/30 transition-colors"
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, slot.minutes)}
+                    />
                   ))}
+                </div>
+
+                {/* Placed activities */}
+                {placedActivities.map((activity) => {
+                  const startPercent = (activity.startTime / 1440) * 100;
+                  const widthPercent = (activity.duration / 1440) * 100;
+                  
+                  return (
+                    <div
+                      key={activity.id}
+                      className={`absolute top-2 ${activity.color} border rounded px-2 py-1 text-xs font-medium flex items-center gap-1 group cursor-pointer`}
+                      style={{
+                        left: `${startPercent}%`,
+                        width: `${widthPercent}%`,
+                        minWidth: '80px'
+                      }}
+                    >
+                      {activity.icon}
+                      <span className="truncate">{activity.title}</span>
+                      <span className="text-xs opacity-70">
+                        {formatTime(activity.startTime)}-{formatTime(activity.startTime + activity.duration)}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 ml-auto"
+                        onClick={() => handleRemoveActivity(activity.id)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 15-minute markers */}
+              <div className="mt-2 grid grid-cols-96 gap-0">
+                {Array.from({ length: 96 }, (_, i) => {
+                  const minutes = i * 15;
+                  const hour = Math.floor(minutes / 60);
+                  const min = minutes % 60;
+                  return (
+                    <div
+                      key={i}
+                      className={`text-xs text-center py-1 border-l border-border/30 hover:bg-muted/20 cursor-pointer ${i % 4 === 0 ? 'font-medium' : 'text-muted-foreground'}`}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, minutes)}
+                    >
+                      {i % 4 === 0 ? '' : min.toString().padStart(2, '0')}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {/* Summary */}
+            {placedActivities.length > 0 && (
+              <div className="mt-4 p-4 bg-muted/30 rounded">
+                <h4 className="font-medium mb-2">スケジュール概要</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                  {placedActivities
+                    .sort((a, b) => a.startTime - b.startTime)
+                    .map((activity) => (
+                      <div key={activity.id} className="flex items-center gap-2">
+                        {activity.icon}
+                        <span>{activity.title}</span>
+                        <span className="text-muted-foreground">
+                          {formatTime(activity.startTime)}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
