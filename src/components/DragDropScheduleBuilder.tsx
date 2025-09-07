@@ -175,68 +175,7 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Activity Templates - Left Side */}
-      <div className="lg:col-span-1">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Plus className="w-4 h-4" />
-              アクティビティ
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {activities.map((activity) => (
-              <div
-                key={activity.id}
-                className={`${activity.color} border-2 border-dashed p-3 rounded-lg cursor-grab hover:opacity-80 transition-opacity`}
-                draggable
-                onDragStart={() => handleDragStart(activity)}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  {activity.icon}
-                  <span className="font-medium text-sm">{activity.title}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs">{activity.duration}分</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => setEditingActivity(activity)}
-                  >
-                    <Edit3 className="w-3 h-3" />
-                  </Button>
-                </div>
-                {editingActivity?.id === activity.id && (
-                  <div className="mt-2 flex gap-1">
-                    <Input
-                      type="number"
-                      defaultValue={activity.duration}
-                      className="h-6 text-xs"
-                      onBlur={(e) => handleEditActivityDuration(activity.id, Number(e.target.value))}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleEditActivityDuration(activity.id, Number((e.target as HTMLInputElement).value));
-                        }
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
-            <Button
-              variant="outline"
-              className="w-full h-20 border-dashed"
-              onClick={handleAddCustomActivity}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              カスタム
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Timeline - Right Side */}
+      {/* Timeline - Left Side */}
       <div className="lg:col-span-3">
         <Card>
           <CardHeader>
@@ -339,6 +278,67 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Activity Templates - Right Side */}
+      <div className="lg:col-span-1">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Plus className="w-4 h-4" />
+              アクティビティ
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {activities.map((activity) => (
+              <div
+                key={activity.id}
+                className={`${activity.color} border-2 border-dashed p-3 rounded-lg cursor-grab hover:opacity-80 transition-opacity`}
+                draggable
+                onDragStart={() => handleDragStart(activity)}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  {activity.icon}
+                  <span className="font-medium text-sm">{activity.title}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">{activity.duration}分</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={() => setEditingActivity(activity)}
+                  >
+                    <Edit3 className="w-3 h-3" />
+                  </Button>
+                </div>
+                {editingActivity?.id === activity.id && (
+                  <div className="mt-2 flex gap-1">
+                    <Input
+                      type="number"
+                      defaultValue={activity.duration}
+                      className="h-6 text-xs"
+                      onBlur={(e) => handleEditActivityDuration(activity.id, Number(e.target.value))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleEditActivityDuration(activity.id, Number((e.target as HTMLInputElement).value));
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+            <Button
+              variant="outline"
+              className="w-full h-20 border-dashed"
+              onClick={handleAddCustomActivity}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              カスタム
+            </Button>
           </CardContent>
         </Card>
       </div>
