@@ -312,7 +312,7 @@ export default function Dashboard() {
             <AlertDescription className="text-center">
               <div className="space-y-2">
                 <p className="font-medium">無料プランをご利用中です</p>
-                <p className="text-sm">習慣1個、タスク1日3個まで利用可能です。</p>
+                <p className="text-sm">習慣2個、タスク1日5個まで利用可能です。</p>
                 <Button onClick={() => navigate('/welcome')} size="sm" className="bg-gradient-to-r from-primary to-primary-glow">
                   プレミアムにアップグレード
                 </Button>
