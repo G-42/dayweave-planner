@@ -390,7 +390,7 @@ export const ScheduleManager = ({ habits }: ScheduleManagerProps) => {
           <Tabs defaultValue="today" className="space-y-4">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="today">今日のスケジュール</TabsTrigger>
-              <TabsTrigger value="builder">ドラッグ&ドロップ</TabsTrigger>
+              <TabsTrigger value="builder">スケジュール設定</TabsTrigger>
               <TabsTrigger value="weekly">週間表示</TabsTrigger>
             </TabsList>
 
