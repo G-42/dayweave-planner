@@ -174,9 +174,9 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
   const timeSlots = generateTimeSlots();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div className="flex gap-6 min-h-0">
       {/* Timeline - Left Side */}
-      <div className="lg:col-span-3">
+      <div className="flex-1 min-w-0">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">24時間タイムライン</CardTitle>
@@ -283,7 +283,7 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
       </div>
 
       {/* Activity Templates - Right Side */}
-      <div className="lg:col-span-1">
+      <div className="w-80 flex-shrink-0">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
