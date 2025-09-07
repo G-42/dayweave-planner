@@ -65,6 +65,8 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
   const [placedActivities, setPlacedActivities] = useState<PlacedActivity[]>(initialSchedule);
   const [draggedActivity, setDraggedActivity] = useState<ScheduleActivity | null>(null);
   const [editingActivity, setEditingActivity] = useState<ScheduleActivity | null>(null);
+  const [wakeTime, setWakeTime] = useState<number>(6); // 6:00
+  const [sleepTime, setSleepTime] = useState<number>(22); // 22:00
   const timelineRef = useRef<HTMLDivElement>(null);
 
   const formatTime = (minutes: number): string => {
@@ -75,11 +77,14 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
 
   const generateTimeSlots = () => {
     const slots = [];
-    for (let i = 0; i < 24; i++) {
+    const endTime = sleepTime > wakeTime ? sleepTime : sleepTime + 24;
+    
+    for (let i = wakeTime; i < endTime; i++) {
+      const hour = i % 24;
       slots.push({
-        hour: i,
-        time: `${i.toString().padStart(2, '0')}:00`,
-        minutes: i * 60
+        hour: hour,
+        time: `${hour.toString().padStart(2, '0')}:00`,
+        minutes: hour * 60
       });
     }
     return slots;
@@ -182,6 +187,37 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
             <CardTitle className="text-base">24時間タイムライン</CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Wake/Sleep Time Settings */}
+            <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+              <h4 className="font-medium mb-3">起床・就寝時間設定</h4>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-muted-foreground">起床時間:</label>
+                  <select 
+                    value={wakeTime} 
+                    onChange={(e) => setWakeTime(Number(e.target.value))}
+                    className="text-sm border border-border rounded px-2 py-1"
+                  >
+                    {Array.from({length: 24}, (_, i) => (
+                      <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-muted-foreground">就寝時間:</label>
+                  <select 
+                    value={sleepTime} 
+                    onChange={(e) => setSleepTime(Number(e.target.value))}
+                    className="text-sm border border-border rounded px-2 py-1"
+                  >
+                    {Array.from({length: 24}, (_, i) => (
+                      <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <div className="relative" ref={timelineRef}>
               {/* Timeline grid - Vertical layout */}
               <div className="space-y-2">
