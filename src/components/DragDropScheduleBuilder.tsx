@@ -46,7 +46,6 @@ interface DragDropScheduleBuilderProps {
 }
 
 const defaultActivities: ScheduleActivity[] = [
-  { id: 'sleep', title: '睡眠', duration: 480, icon: <Moon className="w-4 h-4" />, color: 'bg-indigo-100 border-indigo-300 text-indigo-800', category: 'daily' },
   { id: 'breakfast', title: '朝食', duration: 30, icon: <Coffee className="w-4 h-4" />, color: 'bg-orange-100 border-orange-300 text-orange-800', category: 'meals' },
   { id: 'lunch', title: '昼食', duration: 30, icon: <Utensils className="w-4 h-4" />, color: 'bg-orange-100 border-orange-300 text-orange-800', category: 'meals' },
   { id: 'dinner', title: '夕食', duration: 30, icon: <Utensils className="w-4 h-4" />, color: 'bg-orange-100 border-orange-300 text-orange-800', category: 'meals' },
@@ -81,11 +80,16 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
     
     for (let i = wakeTime; i < endTime; i++) {
       const hour = i % 24;
-      slots.push({
-        hour: hour,
-        time: `${hour.toString().padStart(2, '0')}:00`,
-        minutes: hour * 60
-      });
+      // Generate 15-minute intervals for each hour
+      for (let j = 0; j < 4; j++) {
+        const minutes = j * 15;
+        slots.push({
+          hour: hour,
+          quarter: j,
+          time: `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
+          minutes: hour * 60 + minutes
+        });
+      }
     }
     return slots;
   };
@@ -219,42 +223,46 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
             </div>
 
             <div className="relative" ref={timelineRef}>
-              {/* Timeline grid - Vertical layout */}
-              <div className="space-y-2">
-                {timeSlots.map((slot) => (
-                  <div key={slot.hour} className="flex items-center gap-4">
-                    <div className="w-12 text-sm text-muted-foreground text-right">
-                      {slot.time}
+              {/* Timeline grid - Compact layout with hour groups */}
+              <div className="space-y-3">
+                {Array.from(new Set(timeSlots.map(slot => slot.hour))).map((hour) => (
+                  <div key={hour} className="border border-border rounded-lg overflow-hidden">
+                    <div className="bg-muted/50 px-3 py-1 text-sm font-medium">
+                      {hour.toString().padStart(2, '0')}:00
                     </div>
-                    <div
-                      className="flex-1 h-12 border border-border rounded hover:bg-muted/30 transition-colors cursor-pointer relative"
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, slot.minutes)}
-                    >
-                      {/* Placed activities for this hour */}
-                      {placedActivities
-                        .filter(activity => {
-                          const activityHour = Math.floor(activity.startTime / 60);
-                          return activityHour === slot.hour;
-                        })
-                        .map((activity) => (
+                    <div className="grid grid-cols-4 gap-1 p-2">
+                      {timeSlots
+                        .filter(slot => slot.hour === hour)
+                        .map((slot) => (
                           <div
-                            key={activity.id}
-                            className={`absolute inset-1 ${activity.color} border rounded px-2 py-1 text-xs font-medium flex items-center gap-1 group cursor-pointer`}
+                            key={`${slot.hour}-${slot.quarter}`}
+                            className="h-8 border border-border/50 rounded hover:bg-muted/30 transition-colors cursor-pointer relative text-center flex items-center justify-center"
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, slot.minutes)}
                           >
-                            {activity.icon}
-                            <span className="truncate">{activity.title}</span>
-                            <span className="text-xs opacity-70 ml-auto">
-                              {activity.duration}分
+                            <span className="text-xs text-muted-foreground">
+                              :{(slot.quarter * 15).toString().padStart(2, '0')}
                             </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100"
-                              onClick={() => handleRemoveActivity(activity.id)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
+                            {/* Placed activities for this 15-minute slot */}
+                            {placedActivities
+                              .filter(activity => activity.startTime === slot.minutes)
+                              .map((activity) => (
+                                <div
+                                  key={activity.id}
+                                  className={`absolute inset-0.5 ${activity.color} border rounded px-1 text-xs font-medium flex items-center justify-center group cursor-pointer overflow-hidden`}
+                                  title={`${activity.title} (${activity.duration}分)`}
+                                >
+                                  {activity.icon}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-3 w-3 p-0 opacity-0 group-hover:opacity-100 absolute top-0 right-0"
+                                    onClick={() => handleRemoveActivity(activity.id)}
+                                  >
+                                    <Trash2 className="w-2 h-2" />
+                                  </Button>
+                                </div>
+                              ))}
                           </div>
                         ))}
                     </div>
