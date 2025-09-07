@@ -338,15 +338,7 @@ export default function Dashboard() {
         {/* Main Content */}
 
         {hasCompletedSetup ? <Tabs defaultValue="schedule" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="schedule" className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                スケジュール
-              </TabsTrigger>
-              
-              
-              
-            </TabsList>
+            
 
             <TabsContent value="schedule" className="space-y-4">
               <ScheduleManager habits={habits.map(h => h.name) || []} />
