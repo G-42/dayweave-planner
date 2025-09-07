@@ -15,9 +15,9 @@ export default function Welcome() {
 
   useEffect(() => {
     if (!loading && user && isSubscribed) {
-      navigate("/dashboard");
-    }
-  }, [user, loading, isSubscribed, navigate]); 
+    navigate("/dashboard");
+  }
+}, [user, loading, isSubscribed, navigate]); 
 
   const handleGetStarted = () => {
     navigate('/auth');
@@ -135,7 +135,6 @@ export default function Welcome() {
                 )}
               </CardContent>
             </Card>
-            <section id="pricing">
             {/* Monthly Plan */}
             <Card className="relative border-primary shadow-lg">
               <Badge className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-primary">
@@ -217,7 +216,6 @@ export default function Welcome() {
                 </Button>
               </CardContent>
             </Card>
-            </section>
           </div>
 
           {/* Features */}
