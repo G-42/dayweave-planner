@@ -69,8 +69,7 @@ CREATE POLICY "Users can insert own profile" ON public.profiles
 -- Create RLS policies for subscribers
 CREATE POLICY "Users can view own subscription" ON public.subscribers
   FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Edge functions can manage subscriptions" ON public.subscribers
-  FOR ALL USING (true);
+-- Removed the_str = 
 
 -- Create RLS policies for habits
 CREATE POLICY "Users can manage own habits" ON public.habits

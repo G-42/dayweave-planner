@@ -294,6 +294,29 @@ export default function Habits() {
     return '';
   };
 
+  const handleDeleteHabit = async (habitName: string) => {
+    if (!user) return;
+
+    if (window.confirm(`「${habitName}」を本当に削除しますか？`)) {
+      try {
+        const { error } = await supabase
+          .from("habits")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("name", habitName);
+
+        if (error) {
+          console.error("Error deleting habit:", error);
+          return;
+        }
+
+        setHabits(prev => prev.filter(habit => habit.name !== habitName));
+      } catch (error) {
+        console.error("Failed to delete habit:", error);
+      }
+    }
+  };
+
   const handleInitialSetupComplete = async (selectedHabits: any[]) => {
     if (!user) return;
 
@@ -310,12 +333,29 @@ export default function Habits() {
         last_updated_date: new Date().toISOString().split('T')[0],
       }));
 
-      const { error } = await supabase
-        .from('habits')
+      const { error: habitsError } = await supabase
+        .from("habits")
         .insert(habitsToInsert);
 
-      if (error) {
-        console.error('Error saving habits:', error);
+      if (habitsError) {
+        console.error("Error saving habits:", habitsError);
+        return;
+      }
+
+      // Add corresponding daily tasks for each new habit
+      const tasksToInsert = selectedHabits.map(habit => ({
+        user_id: user.id,
+        title: habit.name, // Task name is the same as habit name
+        completed: false,
+        task_date: new Date().toISOString().split('T')[0], // Today's date
+      }));
+
+      const { error: tasksError } = await supabase
+        .from("daily_tasks")
+        .insert(tasksToInsert);
+
+      if (tasksError) {
+        console.error("Error saving daily tasks for habits:", tasksError);
         return;
       }
 
@@ -590,6 +630,15 @@ export default function Habits() {
                         >
                           <X className="w-4 h-4 mr-1" />
                           キャンセル
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteHabit(habit.name)}
+                          size="sm"
+                          variant="destructive"
+                          className="flex-1"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          削除
                         </Button>
                       </div>
                     </div>

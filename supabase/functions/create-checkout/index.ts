@@ -42,10 +42,10 @@ serve(async (req) => {
     let interval: 'month' | 'year';
     
     if (priceType === 'yearly') {
-      unitAmount = 98000; // ¥980 in cents
+      unitAmount = 980; // ¥980 in cents
       interval = 'year';
     } else {
-      unitAmount = 30000; // ¥300 in cents
+      unitAmount = 300; // ¥300 in cents
       interval = 'month';
     }
 

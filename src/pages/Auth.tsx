@@ -55,7 +55,7 @@ export default function Auth() {
         description: "ダッシュボードに移動します",
       });
       
-      navigate('/dashboard');
+      navigate("/welcome");
     } catch (err) {
       setError('ログインに失敗しました');
     } finally {

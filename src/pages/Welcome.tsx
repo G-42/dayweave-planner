@@ -14,10 +14,9 @@ export default function Welcome() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    // 新規登録後のユーザーもwelcomeページを表示できるように、自動リダイレクトを無効化
-    // if (!loading && user) {
-    //   navigate('/dashboard');
-    // }
+    if (!loading && user) {
+      navigate("/dashboard");
+    }
   }, [user, loading, navigate]);
 
   const handleGetStarted = () => {
@@ -114,11 +113,11 @@ export default function Welcome() {
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500" />
-                    習慣化タスク 1個
+                    習慣化タスク 2個
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500" />
-                    単発タスク 1日3個まで
+                    単発タスク 1日5個まで
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500" />
@@ -184,7 +183,7 @@ export default function Welcome() {
               </Badge>
               <CardHeader>
                 <CardTitle className="text-xl">年額プラン</CardTitle>
-                <CardDescription>約2ヶ月分お得</CardDescription>
+                <CardDescription>8ヶ月分以上お得</CardDescription>
                 <div className="text-3xl font-bold">¥980<span className="text-sm font-normal">/年</span></div>
                 <div className="text-xs text-muted-foreground">月額換算 ¥82</div>
               </CardHeader>
