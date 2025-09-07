@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScheduleItemEditor } from './ScheduleItemEditor';
 import { WeeklyView } from './WeeklyView';
 import { TemplateEditor } from './TemplateEditor';
+import { DragDropTemplateEditor } from './DragDropTemplateEditor';
 import { SavedItemsPanel } from './SavedItemsPanel';
 import { DragDropScheduleBuilder } from './DragDropScheduleBuilder';
 import { Plus, Clock, CheckCircle, Circle, Target, Calendar, Edit, Trash2, MoreHorizontal, Save, ChevronDown, Bookmark, Archive } from 'lucide-react';
@@ -712,13 +713,13 @@ export const ScheduleManager = ({
                         </Button>
                       )}
 
-                      <Button onClick={() => {
-                        setEditingTemplate({ id: '', name: '', items: [] });
-                        setIsTemplateEditorOpen(true);
-                      }} size="sm" variant="outline" className="border-success/50 text-success hover:bg-success/10">
-                        <Plus className="w-4 h-4 mr-1" />
-                        新しいテンプレート作成
-                      </Button>
+                        <Button onClick={() => {
+                          setEditingTemplate({ id: '', name: '', items: [] });
+                          setIsTemplateEditorOpen(true);
+                        }} size="sm" variant="outline" className="border-success/50 text-success hover:bg-success/10">
+                          <Plus className="w-4 h-4 mr-1" />
+                          新しいテンプレート作成
+                        </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -823,10 +824,15 @@ export const ScheduleManager = ({
         </DialogContent>
       </Dialog>
 
-      {/* Template Editor */}
-      <TemplateEditor template={editingTemplate} isOpen={isTemplateEditorOpen} onClose={() => {
-      setIsTemplateEditorOpen(false);
-      setEditingTemplate(null);
-    }} onSave={handleSaveTemplateFromEditor} habits={habits} />
+      {/* Drag & Drop Template Editor */}
+      <DragDropTemplateEditor 
+        template={editingTemplate} 
+        isOpen={isTemplateEditorOpen} 
+        onClose={() => {
+          setIsTemplateEditorOpen(false);
+          setEditingTemplate(null);
+        }} 
+        onSave={handleSaveTemplateFromEditor} 
+      />
     </div>;
 };
