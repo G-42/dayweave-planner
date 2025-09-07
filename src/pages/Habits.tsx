@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Play, Pause, RotateCcw, TrendingUp, Calendar, Target, Flame, CheckCircle, Plus, Settings, Save, X } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
+import { InitialSetup } from '@/components/InitialSetup';
 
 interface HabitData {
   name: string;
@@ -45,6 +46,7 @@ export default function Habits() {
   const [unitInputs, setUnitInputs] = useState<UnitInput>({});
   const [goalInputs, setGoalInputs] = useState<GoalInput>({});
   const [editingHabit, setEditingHabit] = useState<string | null>(null);
+  const [showInitialSetup, setShowInitialSetup] = useState(false);
   const [timer, setTimer] = useState<TimerState>({
     isRunning: false,
     seconds: 0,
@@ -290,6 +292,38 @@ export default function Habits() {
     if (days >= 7) return '💪';
     if (days >= 3) return '✨';
     return '';
+  };
+
+  const handleInitialSetupComplete = async (selectedHabits: any[]) => {
+    if (!user) return;
+
+    try {
+      const habitsToInsert = selectedHabits.map(habit => ({
+        user_id: user.id,
+        name: habit.name,
+        unit: habit.unit,
+        daily_goal: habit.dailyGoal,
+        total_value: 0,
+        today_value: 0,
+        consecutive_days: 0,
+        history: {},
+        last_updated_date: new Date().toISOString().split('T')[0],
+      }));
+
+      const { error } = await supabase
+        .from('habits')
+        .insert(habitsToInsert);
+
+      if (error) {
+        console.error('Error saving habits:', error);
+        return;
+      }
+
+      setShowInitialSetup(false);
+      loadHabits(); // Reload habits data
+    } catch (error) {
+      console.error('Failed to save habits:', error);
+    }
   };
 
   // Show loading or auth required state
@@ -606,18 +640,28 @@ export default function Habits() {
           })}
         </div>
 
-        {habits.length === 0 && (
+        {habits.length === 0 && !showInitialSetup && (
           <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
             <CardContent className="text-center py-8">
               <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p className="text-muted-foreground mb-4">
                 習慣が設定されていません
               </p>
-              <Button className="bg-gradient-to-r from-primary to-primary-glow">
+              <Button 
+                onClick={() => setShowInitialSetup(true)}
+                className="bg-gradient-to-r from-primary to-primary-glow"
+              >
                 習慣を設定する
               </Button>
             </CardContent>
           </Card>
+        )}
+
+        {showInitialSetup && (
+          <InitialSetup
+            onSetupComplete={handleInitialSetupComplete}
+            onSkip={() => setShowInitialSetup(false)}
+          />
         )}
       </div>
     </Layout>
