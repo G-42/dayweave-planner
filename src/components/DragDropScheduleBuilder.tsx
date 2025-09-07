@@ -180,6 +180,28 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
     }
   };
 
+  const handleDeleteActivity = (activityId: string) => {
+    setActivities(activities.filter(activity => activity.id !== activityId));
+  };
+
+  const isSlotOccupied = (slotMinutes: number) => {
+    return placedActivities.some(activity => {
+      const activityEnd = activity.startTime + activity.duration;
+      return slotMinutes >= activity.startTime && slotMinutes < activityEnd;
+    });
+  };
+
+  const getActivityForSlot = (slotMinutes: number) => {
+    return placedActivities.find(activity => {
+      const activityEnd = activity.startTime + activity.duration;
+      return slotMinutes >= activity.startTime && slotMinutes < activityEnd;
+    });
+  };
+
+  const isActivityStart = (slotMinutes: number, activity: PlacedActivity) => {
+    return activity.startTime === slotMinutes;
+  };
+
   const timeSlots = generateTimeSlots();
 
   return (
@@ -240,29 +262,36 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
                             onDragOver={handleDragOver}
                             onDrop={(e) => handleDrop(e, slot.minutes)}
                           >
-                            <span className="text-xs text-muted-foreground">
-                              :{(slot.quarter * 15).toString().padStart(2, '0')}
-                            </span>
-                            {/* Placed activities for this 15-minute slot */}
-                            {placedActivities
-                              .filter(activity => activity.startTime === slot.minutes)
-                              .map((activity) => (
+                            {(() => {
+                              const activity = getActivityForSlot(slot.minutes);
+                              if (!activity) {
+                                return (
+                                  <span className="text-xs text-muted-foreground">
+                                    :{(slot.quarter * 15).toString().padStart(2, '0')}
+                                  </span>
+                                );
+                              }
+                              
+                              const isStart = isActivityStart(slot.minutes, activity);
+                              return (
                                 <div
-                                  key={activity.id}
                                   className={`absolute inset-0.5 ${activity.color} border rounded px-1 text-xs font-medium flex items-center justify-center group cursor-pointer overflow-hidden`}
                                   title={`${activity.title} (${activity.duration}分)`}
                                 >
-                                  {activity.icon}
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-3 w-3 p-0 opacity-0 group-hover:opacity-100 absolute top-0 right-0"
-                                    onClick={() => handleRemoveActivity(activity.id)}
-                                  >
-                                    <Trash2 className="w-2 h-2" />
-                                  </Button>
+                                  {isStart && activity.icon}
+                                  {isStart && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-3 w-3 p-0 opacity-0 group-hover:opacity-100 absolute top-0 right-0"
+                                      onClick={() => handleRemoveActivity(activity.id)}
+                                    >
+                                      <Trash2 className="w-2 h-2" />
+                                    </Button>
+                                  )}
                                 </div>
-                              ))}
+                              );
+                            })()}
                           </div>
                         ))}
                     </div>
@@ -317,14 +346,24 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs">{activity.duration}分</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => setEditingActivity(activity)}
-                  >
-                    <Edit3 className="w-3 h-3" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => setEditingActivity(activity)}
+                    >
+                      <Edit3 className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600"
+                      onClick={() => handleDeleteActivity(activity.id)}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
                 {editingActivity?.id === activity.id && (
                   <div className="mt-2 flex gap-1">
