@@ -607,39 +607,160 @@ export const ScheduleManager = ({
 
             {/* Drag & Drop Builder */}
             <TabsContent value="builder">
-              <DragDropScheduleBuilder onScheduleChange={activities => {
-              const today = new Date().toISOString().split('T')[0];
-              const newScheduleItems = activities.map(activity => ({
-                id: activity.id,
-                startTime: formatTime(activity.startTime),
-                endTime: formatTime(activity.startTime + activity.duration),
-                title: activity.title,
-                isHabit: false,
-                completed: false,
-                date: today,
-                category: activity.category,
-                priority: 'none' as const,
-                notes: ''
-              }));
+              <div className="space-y-6">
+                {/* Template Section */}
+                <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Bookmark className="w-5 h-5" />
+                      テンプレート管理
+                    </CardTitle>
+                    <CardDescription>
+                      スケジュールテンプレートの適用・作成・編集
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-3 flex-wrap">
+                      {/* Template Dropdown */}
+                      {templates.length > 0 && (
+                        <DropdownMenu open={isTemplateMenuOpen} onOpenChange={setIsTemplateMenuOpen}>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="outline" className="border-accent text-foreground hover:bg-accent/50">
+                              <Bookmark className="w-4 h-4 mr-1" />
+                              テンプレート適用
+                              <ChevronDown className="w-3 h-3 ml-1" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-96 bg-popover/95 backdrop-blur border-border z-50 max-h-80 overflow-y-auto" align="start" sideOffset={5}>
+                            <div className="p-2">
+                              <div className="text-sm font-medium mb-2 text-foreground">保存済みテンプレート</div>
+                              <div className="text-xs text-muted-foreground mb-3">
+                                テンプレートを適用すると、今日のスケジュールが置き換わります。
+                              </div>
+                              {templates.map(template => {
+                                const isWelcomeTemplate = template.id.includes('welcome') || template.id === 'welcome-1';
+                                return (
+                                  <div key={template.id} className="group p-3 rounded-lg hover:bg-accent/30 transition-all border border-border/50 mb-2">
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex-1 min-w-0 mr-3">
+                                        <div className="font-medium text-sm text-foreground truncate mb-1">
+                                          {template.name}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground mb-2">
+                                          {template.items.length}個の項目 • {isWelcomeTemplate ? '初期設定' : 'カスタム'}
+                                        </div>
+                                        <div className="flex flex-wrap gap-1">
+                                          {template.items.slice(0, 3).map((item, idx) => (
+                                            <Badge key={idx} variant="outline" className="text-xs h-5 truncate max-w-[80px]">
+                                              {item.title}
+                                            </Badge>
+                                          ))}
+                                          {template.items.length > 3 && (
+                                            <Badge variant="outline" className="text-xs h-5">
+                                              +{template.items.length - 3}
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <Button onClick={() => {
+                                          applyTemplate(template.id);
+                                          setIsTemplateMenuOpen(false);
+                                        }} size="sm" variant="outline" className="text-xs h-7 px-2 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20">
+                                          適用
+                                        </Button>
+                                        <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <Button size="sm" variant="ghost" className="text-xs h-7 w-7 p-0">
+                                              <MoreHorizontal className="w-3 h-3" />
+                                            </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent className="bg-popover/95 backdrop-blur border-border z-50">
+                                            <DropdownMenuItem onClick={() => handleEditTemplate(template)}>
+                                              <Edit className="w-3 h-3 mr-2" />
+                                              詳細編集
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleEditTemplateName(template)}>
+                                              <Edit className="w-3 h-3 mr-2" />
+                                              名前変更
+                                            </DropdownMenuItem>
+                                            {!isWelcomeTemplate && (
+                                              <DropdownMenuItem onClick={() => deleteTemplate(template.id)} className="text-destructive focus:text-destructive">
+                                                <Trash2 className="w-3 h-3 mr-2" />
+                                                削除
+                                              </DropdownMenuItem>
+                                            )}
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
 
-              // Remove existing items for today and add new ones
-              const otherDayItems = scheduleItems.filter(item => item.date !== today);
-              const updatedItems = [...otherDayItems, ...newScheduleItems];
-              setScheduleItems(updatedItems);
-            }} initialSchedule={scheduleItems.filter(item => item.date === new Date().toISOString().split('T')[0]).map(item => {
-              const startMinutes = parseTime(item.startTime);
-              const endMinutes = parseTime(item.endTime);
-              return {
-                id: item.id,
-                activityId: item.id,
-                title: item.title,
-                startTime: startMinutes,
-                duration: endMinutes - startMinutes,
-                color: getPriorityColor(item.priority),
-                icon: <Clock className="w-4 h-4" />,
-                category: item.category || 'custom'
-              };
-            })} />
+                      {todayItems.length > 0 && (
+                        <Button onClick={() => {
+                          setEditingTemplate(null);
+                          setIsTemplateDialogOpen(true);
+                        }} size="sm" variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
+                          <Save className="w-4 h-4 mr-1" />
+                          現在のスケジュールを保存
+                        </Button>
+                      )}
+
+                      <Button onClick={() => {
+                        setEditingTemplate({ id: '', name: '', items: [] });
+                        setIsTemplateEditorOpen(true);
+                      }} size="sm" variant="outline" className="border-success/50 text-success hover:bg-success/10">
+                        <Plus className="w-4 h-4 mr-1" />
+                        新しいテンプレート作成
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Drag & Drop Schedule Builder */}
+                <DragDropScheduleBuilder 
+                  onScheduleChange={activities => {
+                    const today = new Date().toISOString().split('T')[0];
+                    const newScheduleItems = activities.map(activity => ({
+                      id: activity.id,
+                      startTime: formatTime(activity.startTime),
+                      endTime: formatTime(activity.startTime + activity.duration),
+                      title: activity.title,
+                      isHabit: false,
+                      completed: false,
+                      date: today,
+                      category: activity.category,
+                      priority: 'none' as const,
+                      notes: ''
+                    }));
+
+                    // Remove existing items for today and add new ones
+                    const otherDayItems = scheduleItems.filter(item => item.date !== today);
+                    const updatedItems = [...otherDayItems, ...newScheduleItems];
+                    setScheduleItems(updatedItems);
+                  }} 
+                  initialSchedule={scheduleItems.filter(item => item.date === new Date().toISOString().split('T')[0]).map(item => {
+                    const startMinutes = parseTime(item.startTime);
+                    const endMinutes = parseTime(item.endTime);
+                    return {
+                      id: item.id,
+                      activityId: item.id,
+                      title: item.title,
+                      startTime: startMinutes,
+                      duration: endMinutes - startMinutes,
+                      color: getPriorityColor(item.priority),
+                      icon: <Clock className="w-4 h-4" />,
+                      category: item.category || 'custom'
+                    };
+                  })} 
+                />
+              </div>
             </TabsContent>
 
             {/* Weekly View */}
