@@ -596,7 +596,7 @@ export const ScheduleManager = ({
                     </div> : <div className="text-center py-12 text-muted-foreground">
                       <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p className="text-sm">今日のスケジュールがありません</p>
-                      <p className="text-xs mb-4">項目をドラッグ&ドロップまたは上のボタンから追加してください</p>
+                      <p className="text-xs mb-4">項目をドラッグ&ドロップから追加してください</p>
                       
                     </div>}
                 </CardContent>
