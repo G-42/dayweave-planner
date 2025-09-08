@@ -299,6 +299,16 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
               </div>
             </div>
 
+            {/* Habit Warning */}
+            {unscheduledHabits.length > 0 && (
+              <Alert className="mb-4 border-amber-200 bg-amber-50 text-amber-800">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  以下の習慣がスケジュールに追加されていません: {unscheduledHabits.map(habit => habit.title).join(', ')}
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="relative" ref={timelineRef}>
               {/* Timeline grid - Compact layout with hour groups */}
               <div className="space-y-3">
@@ -354,16 +364,6 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
                 ))}
               </div>
             </div>
-
-            {/* Habit Warning */}
-            {unscheduledHabits.length > 0 && (
-              <Alert className="mt-4 border-amber-200 bg-amber-50 text-amber-800">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  以下の習慣がスケジュールに追加されていません: {unscheduledHabits.map(habit => habit.title).join(', ')}
-                </AlertDescription>
-              </Alert>
-            )}
 
             {/* Summary */}
             {placedActivities.length > 0 && (
