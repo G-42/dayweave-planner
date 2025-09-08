@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { 
@@ -20,7 +21,8 @@ import {
   Edit3,
   Plus,
   Clock,
-  Target
+  Target,
+  AlertTriangle
 } from 'lucide-react';
 
 interface ScheduleActivity {
@@ -248,6 +250,15 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
 
   const timeSlots = generateTimeSlots();
 
+  // Check for unscheduled habit activities
+  const habitActivities = activities.filter(activity => activity.category === 'habit');
+  const scheduledHabitActivityIds = placedActivities
+    .filter(activity => activity.category === 'habit')
+    .map(activity => activity.activityId);
+  const unscheduledHabits = habitActivities.filter(
+    habit => !scheduledHabitActivityIds.includes(habit.id)
+  );
+
   return (
     <div className="flex gap-6 min-h-0">
       {/* Timeline - Left Side */}
@@ -343,6 +354,16 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
                 ))}
               </div>
             </div>
+
+            {/* Habit Warning */}
+            {unscheduledHabits.length > 0 && (
+              <Alert className="mt-4 border-amber-200 bg-amber-50 text-amber-800">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  以下の習慣がスケジュールに追加されていません: {unscheduledHabits.map(habit => habit.title).join(', ')}
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Summary */}
             {placedActivities.length > 0 && (
