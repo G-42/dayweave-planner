@@ -1,9 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { 
   Home, 
   Utensils, 
@@ -17,7 +19,8 @@ import {
   Trash2,
   Edit3,
   Plus,
-  Clock
+  Clock,
+  Target
 } from 'lucide-react';
 
 interface ScheduleActivity {
@@ -60,6 +63,7 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
   onScheduleChange,
   initialSchedule = []
 }) => {
+  const { user } = useAuth();
   const [activities, setActivities] = useState<ScheduleActivity[]>(defaultActivities);
   const [placedActivities, setPlacedActivities] = useState<PlacedActivity[]>(initialSchedule);
   const [draggedActivity, setDraggedActivity] = useState<ScheduleActivity | null>(null);
@@ -67,6 +71,46 @@ export const DragDropScheduleBuilder: React.FC<DragDropScheduleBuilderProps> = (
   const [wakeTime, setWakeTime] = useState<number>(6); // 6:00
   const [sleepTime, setSleepTime] = useState<number>(22); // 22:00
   const timelineRef = useRef<HTMLDivElement>(null);
+
+  // Load habits and add them as activities
+  const loadHabitsAsActivities = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('habits')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at');
+
+      if (error) {
+        console.error('Error loading habits:', error);
+        return;
+      }
+
+      // Convert habits to activities
+      const habitActivities: ScheduleActivity[] = data.map(habit => ({
+        id: `habit-${habit.id}`,
+        title: `${habit.name} (${habit.daily_goal}${habit.unit === 'minutes' ? '分' : habit.unit})`,
+        duration: habit.daily_goal || 30,
+        icon: <Target className="w-4 h-4" />,
+        color: 'bg-indigo-100 border-indigo-300 text-indigo-800',
+        category: 'habit'
+      }));
+
+      // Merge default activities with habit activities
+      setActivities([...defaultActivities, ...habitActivities]);
+    } catch (error) {
+      console.error('Failed to load habits:', error);
+    }
+  };
+
+  // Load habits when component mounts or user changes
+  useEffect(() => {
+    if (user) {
+      loadHabitsAsActivities();
+    }
+  }, [user]);
 
   const formatTime = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
