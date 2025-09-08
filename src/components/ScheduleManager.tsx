@@ -597,10 +597,7 @@ export const ScheduleManager = ({
                       <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p className="text-sm">今日のスケジュールがありません</p>
                       <p className="text-xs mb-4">項目をドラッグ&ドロップまたは上のボタンから追加してください</p>
-                      <Button onClick={() => handleAddNewItem()} className="bg-gradient-to-r from-primary to-primary-glow">
-                        <Plus className="w-4 h-4 mr-1" />
-                        スケジュールを追加
-                      </Button>
+                      
                     </div>}
                 </CardContent>
               </Card>
@@ -623,8 +620,7 @@ export const ScheduleManager = ({
                   <CardContent>
                     <div className="flex gap-3 flex-wrap">
                       {/* Template Dropdown */}
-                      {templates.length > 0 && (
-                        <DropdownMenu open={isTemplateMenuOpen} onOpenChange={setIsTemplateMenuOpen}>
+                      {templates.length > 0 && <DropdownMenu open={isTemplateMenuOpen} onOpenChange={setIsTemplateMenuOpen}>
                           <DropdownMenuTrigger asChild>
                             <Button size="sm" variant="outline" className="border-accent text-foreground hover:bg-accent/50">
                               <Bookmark className="w-4 h-4 mr-1" />
@@ -639,9 +635,8 @@ export const ScheduleManager = ({
                                 テンプレートを適用すると、今日のスケジュールが置き換わります。
                               </div>
                               {templates.map(template => {
-                                const isWelcomeTemplate = template.id.includes('welcome') || template.id === 'welcome-1';
-                                return (
-                                  <div key={template.id} className="group p-3 rounded-lg hover:bg-accent/30 transition-all border border-border/50 mb-2">
+                            const isWelcomeTemplate = template.id.includes('welcome') || template.id === 'welcome-1';
+                            return <div key={template.id} className="group p-3 rounded-lg hover:bg-accent/30 transition-all border border-border/50 mb-2">
                                     <div className="flex items-start justify-between">
                                       <div className="flex-1 min-w-0 mr-3">
                                         <div className="font-medium text-sm text-foreground truncate mb-1">
@@ -651,23 +646,19 @@ export const ScheduleManager = ({
                                           {template.items.length}個の項目 • {isWelcomeTemplate ? '初期設定' : 'カスタム'}
                                         </div>
                                         <div className="flex flex-wrap gap-1">
-                                          {template.items.slice(0, 3).map((item, idx) => (
-                                            <Badge key={idx} variant="outline" className="text-xs h-5 truncate max-w-[80px]">
+                                          {template.items.slice(0, 3).map((item, idx) => <Badge key={idx} variant="outline" className="text-xs h-5 truncate max-w-[80px]">
                                               {item.title}
-                                            </Badge>
-                                          ))}
-                                          {template.items.length > 3 && (
-                                            <Badge variant="outline" className="text-xs h-5">
+                                            </Badge>)}
+                                          {template.items.length > 3 && <Badge variant="outline" className="text-xs h-5">
                                               +{template.items.length - 3}
-                                            </Badge>
-                                          )}
+                                            </Badge>}
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-1">
                                         <Button onClick={() => {
-                                          applyTemplate(template.id);
-                                          setIsTemplateMenuOpen(false);
-                                        }} size="sm" variant="outline" className="text-xs h-7 px-2 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20">
+                                    applyTemplate(template.id);
+                                    setIsTemplateMenuOpen(false);
+                                  }} size="sm" variant="outline" className="text-xs h-7 px-2 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20">
                                           適用
                                         </Button>
                                         <DropdownMenu>
@@ -685,38 +676,36 @@ export const ScheduleManager = ({
                                               <Edit className="w-3 h-3 mr-2" />
                                               名前変更
                                             </DropdownMenuItem>
-                                            {!isWelcomeTemplate && (
-                                              <DropdownMenuItem onClick={() => deleteTemplate(template.id)} className="text-destructive focus:text-destructive">
+                                            {!isWelcomeTemplate && <DropdownMenuItem onClick={() => deleteTemplate(template.id)} className="text-destructive focus:text-destructive">
                                                 <Trash2 className="w-3 h-3 mr-2" />
                                                 削除
-                                              </DropdownMenuItem>
-                                            )}
+                                              </DropdownMenuItem>}
                                           </DropdownMenuContent>
                                         </DropdownMenu>
                                       </div>
                                     </div>
-                                  </div>
-                                );
-                              })}
+                                  </div>;
+                          })}
                             </div>
                           </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                        </DropdownMenu>}
 
-                      {todayItems.length > 0 && (
-                        <Button onClick={() => {
-                          setEditingTemplate(null);
-                          setIsTemplateDialogOpen(true);
-                        }} size="sm" variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
+                      {todayItems.length > 0 && <Button onClick={() => {
+                      setEditingTemplate(null);
+                      setIsTemplateDialogOpen(true);
+                    }} size="sm" variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
                           <Save className="w-4 h-4 mr-1" />
                           現在のスケジュールを保存
-                        </Button>
-                      )}
+                        </Button>}
 
                         <Button onClick={() => {
-                          setEditingTemplate({ id: '', name: '', items: [] });
-                          setIsTemplateEditorOpen(true);
-                        }} size="sm" variant="outline" className="border-success/50 text-success hover:bg-success/10">
+                      setEditingTemplate({
+                        id: '',
+                        name: '',
+                        items: []
+                      });
+                      setIsTemplateEditorOpen(true);
+                    }} size="sm" variant="outline" className="border-success/50 text-success hover:bg-success/10">
                           <Plus className="w-4 h-4 mr-1" />
                           新しいテンプレート作成
                         </Button>
@@ -725,42 +714,39 @@ export const ScheduleManager = ({
                 </Card>
 
                 {/* Drag & Drop Schedule Builder */}
-                <DragDropScheduleBuilder 
-                  onScheduleChange={activities => {
-                    const today = new Date().toISOString().split('T')[0];
-                    const newScheduleItems = activities.map(activity => ({
-                      id: activity.id,
-                      startTime: formatTime(activity.startTime),
-                      endTime: formatTime(activity.startTime + activity.duration),
-                      title: activity.title,
-                      isHabit: false,
-                      completed: false,
-                      date: today,
-                      category: activity.category,
-                      priority: 'none' as const,
-                      notes: ''
-                    }));
+                <DragDropScheduleBuilder onScheduleChange={activities => {
+                const today = new Date().toISOString().split('T')[0];
+                const newScheduleItems = activities.map(activity => ({
+                  id: activity.id,
+                  startTime: formatTime(activity.startTime),
+                  endTime: formatTime(activity.startTime + activity.duration),
+                  title: activity.title,
+                  isHabit: false,
+                  completed: false,
+                  date: today,
+                  category: activity.category,
+                  priority: 'none' as const,
+                  notes: ''
+                }));
 
-                    // Remove existing items for today and add new ones
-                    const otherDayItems = scheduleItems.filter(item => item.date !== today);
-                    const updatedItems = [...otherDayItems, ...newScheduleItems];
-                    setScheduleItems(updatedItems);
-                  }} 
-                  initialSchedule={scheduleItems.filter(item => item.date === new Date().toISOString().split('T')[0]).map(item => {
-                    const startMinutes = parseTime(item.startTime);
-                    const endMinutes = parseTime(item.endTime);
-                    return {
-                      id: item.id,
-                      activityId: item.id,
-                      title: item.title,
-                      startTime: startMinutes,
-                      duration: endMinutes - startMinutes,
-                      color: getPriorityColor(item.priority),
-                      icon: <Clock className="w-4 h-4" />,
-                      category: item.category || 'custom'
-                    };
-                  })} 
-                />
+                // Remove existing items for today and add new ones
+                const otherDayItems = scheduleItems.filter(item => item.date !== today);
+                const updatedItems = [...otherDayItems, ...newScheduleItems];
+                setScheduleItems(updatedItems);
+              }} initialSchedule={scheduleItems.filter(item => item.date === new Date().toISOString().split('T')[0]).map(item => {
+                const startMinutes = parseTime(item.startTime);
+                const endMinutes = parseTime(item.endTime);
+                return {
+                  id: item.id,
+                  activityId: item.id,
+                  title: item.title,
+                  startTime: startMinutes,
+                  duration: endMinutes - startMinutes,
+                  color: getPriorityColor(item.priority),
+                  icon: <Clock className="w-4 h-4" />,
+                  category: item.category || 'custom'
+                };
+              })} />
               </div>
             </TabsContent>
 
@@ -825,14 +811,9 @@ export const ScheduleManager = ({
       </Dialog>
 
       {/* Drag & Drop Template Editor */}
-      <DragDropTemplateEditor 
-        template={editingTemplate} 
-        isOpen={isTemplateEditorOpen} 
-        onClose={() => {
-          setIsTemplateEditorOpen(false);
-          setEditingTemplate(null);
-        }} 
-        onSave={handleSaveTemplateFromEditor} 
-      />
+      <DragDropTemplateEditor template={editingTemplate} isOpen={isTemplateEditorOpen} onClose={() => {
+      setIsTemplateEditorOpen(false);
+      setEditingTemplate(null);
+    }} onSave={handleSaveTemplateFromEditor} />
     </div>;
 };
