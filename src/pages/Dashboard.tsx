@@ -42,8 +42,6 @@ export default function Dashboard() {
   const {
     user,
     session,
-    isSubscribed,
-    subscriptionTier,
     loading
   } = useAuth();
   const navigate = useNavigate();
@@ -129,7 +127,7 @@ export default function Dashboard() {
     }
   };
   const handleManageSubscription = async () => {
-    if (!session || !isSubscribed) return;
+    if (!session) return;
     try {
       const {
         data,
@@ -149,15 +147,13 @@ export default function Dashboard() {
     }
   };
   const canAddMoreHabits = () => {
-    if (isSubscribed) return true;
-    return habits.length < 1; // Free plan: 1 habit only
+    return true; // Unlimited habits
   };
   const canAddMoreTasks = () => {
-    if (isSubscribed) return true;
-    return dailyTasks.length < 3; // Free plan: 3 tasks per day
+    return true; // Unlimited tasks
   };
   const canViewAnalytics = () => {
-    return isSubscribed; // Analytics only for premium users
+    return true; // Analytics available for all users
   };
   const handleSetupComplete = async (habits: Habit[]) => {
     try {
@@ -293,7 +289,7 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
               {getGreeting()}、{user.user_metadata?.name || 'ユーザー'}さん
             </h1>
-            {isSubscribed && <Crown className="w-5 h-5 text-yellow-500" />}
+            
           </div>
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <Calendar className="w-4 h-4" />
@@ -306,34 +302,6 @@ export default function Dashboard() {
               初期設定を開始
             </Button>}
         </div>
-
-        {/* Subscription Status */}
-        {!isSubscribed ? <Alert className="border-warning bg-warning/10">
-            <AlertDescription className="text-center">
-              <div className="space-y-2">
-                <p className="font-medium">無料プランをご利用中です</p>
-                <p className="text-sm">習慣2個、タスク1日5個まで利用可能です。</p>
-                <Button onClick={() => navigate('/welcome')} size="sm" className="bg-gradient-to-r from-primary to-primary-glow">
-                  プレミアムにアップグレード
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert> : <Alert className="border-success bg-success/10">
-            <AlertDescription className="text-center">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Crown className="w-4 h-4 text-yellow-500" />
-                  <span className="font-medium">
-                    プレミアムプラン ({subscriptionTier === 'yearly' ? '年額' : '月額'})
-                  </span>
-                </div>
-                <Button onClick={handleManageSubscription} size="sm" variant="outline">
-                  <Settings className="w-4 h-4 mr-2" />
-                  管理
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>}
 
         {/* Main Content */}
 
@@ -351,21 +319,21 @@ export default function Dashboard() {
                   <Card className="text-center p-4">
                     <div className="text-2xl font-bold text-success">{habits.length}</div>
                     <div className="text-xs text-muted-foreground">
-                      習慣 {!isSubscribed && '(1個まで)'}
+                      習慣
                     </div>
                   </Card>
                   
                   <Card className="text-center p-4">
                     <div className="text-2xl font-bold text-primary">{dailyTasks.length}</div>
                     <div className="text-xs text-muted-foreground">
-                      今日のタスク {!isSubscribed && '(3個まで)'}
+                      今日のタスク
                     </div>
                   </Card>
                   
                   <Card className="text-center p-4">
                     <div className="text-2xl font-bold text-warning">{goals.length}</div>
                     <div className="text-xs text-muted-foreground">
-                      目標 {!isSubscribed && '(制限あり)'}
+                      目標
                     </div>
                   </Card>
                   
@@ -452,15 +420,7 @@ export default function Dashboard() {
             </TabsContent>
 
             <TabsContent value="goals" className="space-y-4">
-              {!isSubscribed ? <Card className="shadow-medium border-0 bg-card/90 backdrop-blur">
-                  <CardContent className="text-center py-8 text-muted-foreground">
-                    <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>目標管理はプレミアムプラン限定です</p>
-                    <Button onClick={() => navigate('/welcome')} size="sm" className="mt-2">
-                      アップグレード
-                    </Button>
-                  </CardContent>
-                </Card> : <GoalManager />}
+              <GoalManager />
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-4">

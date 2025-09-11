@@ -53,7 +53,6 @@ interface BigGoal {
 const units = ['kg', '点', '冊', '時間', '回', 'km', '％', 'その他'];
 
 export const GoalManager = () => {
-  const { isSubscribed } = useAuth();
   const [bigGoals, setBigGoals] = useState<BigGoal[]>([]);
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
   const [showAddForm, setShowAddForm] = useState(false);
@@ -304,28 +303,6 @@ export const GoalManager = () => {
     });
   };
 
-  // Show subscription required message for free users
-  if (!isSubscribed) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center">
-          <div className="max-w-md mx-auto bg-gradient-to-br from-primary/10 to-primary-soft/20 rounded-lg p-8 border shadow-medium">
-            <div className="text-4xl mb-4">🎯</div>
-            <h2 className="text-xl font-semibold mb-2 flex items-center justify-center gap-2">
-              <Lock className="w-5 h-5" />
-              大きな目標設定
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              長期目標の設定と階層的な進捗管理は有料プランの機能です。プレミアムにアップグレードしてください。
-            </p>
-            <Badge className="bg-primary text-primary-foreground">
-              プレミアム機能
-            </Badge>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

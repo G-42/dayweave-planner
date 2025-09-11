@@ -9,15 +9,15 @@ import { Layout } from '@/components/Layout';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Welcome() {
-  const { user, session, isSubscribed, loading } = useAuth();
+  const { user, session, loading } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    if (!loading && user && isSubscribed) {
+    if (!loading && user) {
     navigate("/dashboard");
   }
-}, [user, loading, isSubscribed, navigate]); 
+}, [user, loading, navigate]);
 
   const handleGetStarted = () => {
     navigate('/auth');
