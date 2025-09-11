@@ -55,7 +55,7 @@ export default function Auth() {
         description: "ダッシュボードに移動します",
       });
       
-      navigate("/welcome");
+      navigate("/dashboard");
     } catch (err) {
       setError('ログインに失敗しました');
     } finally {
@@ -93,7 +93,7 @@ export default function Auth() {
         description: "ウェルカムページへ移動します",
       });
       
-      navigate('/welcome');
+      navigate('/dashboard');
     } catch (err) {
       setError('アカウント作成に失敗しました');
     } finally {
